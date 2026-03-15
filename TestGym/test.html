@@ -1,0 +1,116 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Dumbbell, ArrowRight, Globe } from 'lucide-react';
+
+const TwelveFitLogin = () => {
+  return (
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col font-sans antialiased">
+      {/* Main Container - Khớp với tỷ lệ màn hình Mac 14/16 inch */}
+      <main className="flex-grow flex items-center justify-center px-8 xl:px-24">
+        <div className="max-w-[1400px] w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          {/* Left Side: Brand & Visuals */}
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "circOut" }}
+            className="space-y-8"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-[#E30613] p-4 rounded-[22%] shadow-2xl shadow-red-500/20">
+                <Dumbbell size={36} className="text-white" strokeWidth={2.5} />
+              </div>
+              <span className="text-4xl font-black tracking-tighter text-black">
+                TWELVE<span className="text-[#E30613]">FIT</span>
+              </span>
+            </div>
+
+            <h1 className="text-6xl xl:text-8xl font-bold leading-[1.05] tracking-tight text-[#1D1D1F]">
+              Trải nghiệm fitness, <br />
+              <span className="text-gray-300">thay đổi bản thân.</span> <br />
+              Khám phá sự <span className="text-[#E30613]">TwelveFit.</span>
+            </h1>
+            
+            <p className="text-xl text-gray-500 max-w-lg leading-relaxed">
+              Hệ thống phòng tập cao cấp tối ưu cho mục tiêu cá nhân của bạn. 
+              Đăng nhập để bắt đầu hành trình ngay hôm nay.
+            </p>
+          </motion.div>
+
+          {/* Right Side: Login Form (Apple-Style Glassmorphism) */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex justify-center lg:justify-end"
+          >
+            <div className="w-full max-w-[480px] bg-white/70 backdrop-blur-3xl p-12 rounded-[40px] shadow-[0_32px_64px_rgba(0,0,0,0.08)] border border-white/40">
+              <h2 className="text-2xl font-semibold text-center mb-10 text-gray-800">
+                Chào mừng trở lại
+              </h2>
+
+              <form className="space-y-6">
+                <div className="relative group">
+                  <input 
+                    type="text" 
+                    placeholder="Email hoặc ID thành viên"
+                    className="w-full px-6 py-5 bg-gray-100/60 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-red-500/10 focus:border-[#E30613] outline-none transition-all duration-400 text-lg"
+                  />
+                </div>
+
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    placeholder="Mật khẩu"
+                    className="w-full px-6 py-5 bg-gray-100/60 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-red-500/10 focus:border-[#E30613] outline-none transition-all duration-400 text-lg"
+                  />
+                  <div className="mt-2 text-right px-2">
+                    <a href="#" className="text-sm font-medium text-gray-400 hover:text-[#E30613] transition-colors">
+                      Quên mật khẩu?
+                    </a>
+                  </div>
+                </div>
+
+                <button className="w-full bg-[#E30613] hover:bg-[#C20511] text-white font-bold py-5 rounded-2xl text-xl shadow-xl shadow-red-500/20 flex items-center justify-center gap-3 group active:scale-[0.98] transition-all">
+                  ĐĂNG NHẬP
+                  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </form>
+
+              <div className="flex items-center my-10">
+                <div className="flex-grow h-px bg-gray-200"></div>
+                <span className="px-4 text-xs font-bold text-gray-400 tracking-widest uppercase">Hoặc</span>
+                <div className="flex-grow h-px bg-gray-200"></div>
+              </div>
+
+              <button className="w-full bg-black text-white hover:bg-gray-800 py-5 rounded-2xl font-bold text-lg transition-all shadow-lg active:scale-[0.98]">
+                ĐĂNG KÝ THÀNH VIÊN MỚI
+              </button>
+
+              <p className="mt-10 text-center text-[11px] font-bold text-gray-300 uppercase tracking-[0.3em]">
+                PREMIUM EXPERIENCE BY TWELVEFIT
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </main>
+
+      {/* Footer Ngôn ngữ - Tối giản */}
+      <footer className="py-10 border-t border-gray-100 bg-white/50 backdrop-blur-md">
+        <div className="container mx-auto px-4 flex flex-wrap justify-center items-center gap-8 text-[13px] font-medium text-gray-400">
+          <div className="flex items-center gap-2 text-black">
+            <Globe size={16} />
+            <span>Tiếng Việt</span>
+          </div>
+          <a href="#" className="hover:text-black transition-colors">English (US)</a>
+          <a href="#" className="hover:text-black transition-colors">中文(台灣)</a>
+          <a href="#" className="hover:text-black transition-colors">日本語</a>
+          <a href="#" className="hover:text-black transition-colors">Français (France)</a>
+          <a href="#" className="hover:text-black transition-colors">Ngôn ngữ khác...</a>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default TwelveFitLogin;
