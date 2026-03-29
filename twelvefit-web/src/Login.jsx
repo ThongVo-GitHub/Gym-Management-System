@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mode, setMode] = useState(location.state?.mode || 'login');
 
-  return (
-    <div className="min-h-screen flex flex-col relative font-['Montserrat',sans-serif]">
-      <style>
-        {`@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');`}
-      </style>
+  const handleLogin = (e) => {
+    e.preventDefault();
+    navigate('/dashboard');
+  };
 
+  return (
+    // Đã bỏ inline font vì index.css đã set Montserrat làm mặc định
+    <div className="min-h-screen flex flex-col relative text-white">
+      
       {/* BACKGROUND ĐEN SANG TRỌNG */}
       <div className="fixed inset-0 z-[-1] overflow-hidden bg-black">
         <div
@@ -29,15 +33,18 @@ export default function Login() {
               <div className="bg-[#d03030] w-[65px] h-[65px] rounded-[20px] flex items-center justify-center mr-5 shadow-lg">
                 <img src="/logogym.png" alt="Logo" className="w-10 h-10 object-contain" />
               </div>
-              <h3 className="font-bold text-[2.2rem] tracking-widest text-white m-0">TWELVE<span className="text-[#d03030]">FIT</span></h3>
+              <h3 className="font-bold text-[2.2rem] tracking-widest m-0 font-serif-luxury">
+                TWELVE<span className="text-[#d03030]">FIT</span>
+              </h3>
             </div>
             
             <div className="font-bold text-4xl md:text-[3.5rem] lg:text-[4rem] leading-[1.15] tracking-tight drop-shadow-2xl">
-              <div className="text-white">Thay đổi cơ thể,</div>
-              <div className="text-gray-300">Thay đổi cuộc đời.</div>
+              {/* Áp dụng font Raleway (font-tagline) cho Slogan */}
+              <div className="text-white font-tagline">Thay đổi cơ thể,</div>
+              <div className="text-gray-300 font-tagline">Thay đổi cuộc đời.</div>
               <div className="flex flex-row whitespace-nowrap mt-4">
                 <span className="text-white mr-4">Thử ngay,</span>
-                <span className="text-[#d03030]">TwelveFit.</span>
+                <span className="text-[#d03030] font-serif-luxury">TwelveFit.</span>
               </div>
             </div>
             
@@ -67,13 +74,11 @@ export default function Login() {
                     placeholder="Họ và tên" 
                   />
                 )}
-                
                 <input 
                   type="text" 
                   className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
                   placeholder="Email hoặc ID" 
                 />
-                
                 <input 
                   type="password" 
                   className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
@@ -96,7 +101,7 @@ export default function Login() {
                   />
                 )}
                 
-                <button type="button" className="w-full bg-[#d03030] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#b52a2a] hover:scale-[1.02] active:scale-95 transition-all mt-2 tracking-widest uppercase text-sm">
+                <button type="button" onClick={handleLogin} className="w-full bg-[#d03030] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#b52a2a] hover:scale-[1.02] active:scale-95 transition-all mt-2 tracking-widest uppercase text-sm">
                   {mode === 'login' ? 'ĐĂNG NHẬP' : 'HOÀN TẤT ĐĂNG KÝ'}
                 </button>
                 
@@ -121,7 +126,7 @@ export default function Login() {
       </div>
 
       <footer className="py-6 text-center relative z-10 flex flex-col items-center">
-        <p className="text-gray-500 italic text-xs drop-shadow-sm mb-2">
+        <p className="text-gray-500 italic text-xs drop-shadow-sm mb-2 font-tagline">
           "Buổi tập khó nhất chính là buổi tập bạn không bắt đầu."
         </p>
         <span className="text-gray-300 font-bold text-xs hover:text-white transition-colors cursor-pointer tracking-widest uppercase">
