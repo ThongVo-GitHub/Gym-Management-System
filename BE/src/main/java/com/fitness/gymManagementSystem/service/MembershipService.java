@@ -4,6 +4,7 @@ import com.fitness.gymManagementSystem.dto.BuyMembershipRequest;
 import com.fitness.gymManagementSystem.entity.Package;
 import com.fitness.gymManagementSystem.entity.Invoice;
 import com.fitness.gymManagementSystem.entity.User;
+import com.fitness.gymManagementSystem.entity.UserStatus;
 import com.fitness.gymManagementSystem.entity.InvoiceStatus;
 import com.fitness.gymManagementSystem.repository.PackageRepository;
 import com.fitness.gymManagementSystem.repository.InvoiceRepository;
@@ -69,7 +70,7 @@ public class MembershipService {
         User user = userRepository.findByUsername(invoice.getUserId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
-        user.setStatus("Active");
+        user.setStatus(UserStatus.ACTIVE);
         user.setGymPackage(invoice.getPackageId());
         user.setExpiryDate(invoice.getExpiredDate());
 

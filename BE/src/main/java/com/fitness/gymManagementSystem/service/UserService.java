@@ -9,10 +9,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fitness.gymManagementSystem.dto.RegisterRequest; // Import thêm dòng này
+import com.fitness.gymManagementSystem.dto.RegisterRequest; 
 import com.fitness.gymManagementSystem.dto.UserResponse;
 import com.fitness.gymManagementSystem.entity.Role;
 import com.fitness.gymManagementSystem.entity.User;
+import com.fitness.gymManagementSystem.entity.UserStatus;
 import com.fitness.gymManagementSystem.exception.ResourceNotFoundException;
 import com.fitness.gymManagementSystem.repository.UserRepository;
 
@@ -60,8 +61,8 @@ public class UserService {
                 .username(request.username())
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password())) 
-                .role(Role.USER) // luôn là USER
-                .status("ACTIVE")
+                .role(Role.USER) 
+                .status(UserStatus.ACTIVE) 
                 .build();
 
         User savedUser = userRepository.save(newUser);

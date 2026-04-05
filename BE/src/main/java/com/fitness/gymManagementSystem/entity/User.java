@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users", indexes = {
@@ -16,24 +17,25 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ===== BASIC =====
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role;
+    private Role role = Role.USER;
 
     @Column(name = "full_name", length = 100)
     private String fullName;
 
-    // ================= NEW FIELDS (GYM) =================
-
+    // ===== GYM =====
     @Column(name = "gym_package", length = 50)
     private String gymPackage;
 
@@ -46,134 +48,90 @@ public class User {
     @Column(name = "pt_sessions")
     private Integer ptSessions;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private String status;
+    private UserStatus status = UserStatus.ACTIVE;
 
-    // ================= TIMESTAMP =================
-
+    // ===== TIMESTAMP =====
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    // ===== AUTO TIME =====
     @PrePersist
     protected void onCreate() {
-        createdAt = Instant.now();
-        updatedAt = Instant.now();
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
-    // ================= GETTER / SETTER =================
+    // ===== GETTER / SETTER =====
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public void setId(Long id) { this.id = id; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getUsername() { return username; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
+    public String getPasswordHash() { return passwordHash; }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-    public Role getRole() {
-        return role;
-    }
+    public Role getRole() { return role; }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
+    public void setRole(Role role) { this.role = role; }
 
-    public String getFullName() {
-        return fullName;
-    }
+    public String getFullName() { return fullName; }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getGymPackage() {
-        return gymPackage;
-    }
+    public String getGymPackage() { return gymPackage; }
 
-    public void setGymPackage(String gymPackage) {
-        this.gymPackage = gymPackage;
-    }
+    public void setGymPackage(String gymPackage) { this.gymPackage = gymPackage; }
 
-    public LocalDate getExpiryDate() {
-        return expiryDate;
-    }
+    public LocalDate getExpiryDate() { return expiryDate; }
 
-    public void setExpiryDate(LocalDate expiryDate) {
-        this.expiryDate = expiryDate;
-    }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
-    public Integer getGroupSessions() {
-        return groupSessions;
-    }
+    public Integer getGroupSessions() { return groupSessions; }
 
-    public void setGroupSessions(Integer groupSessions) {
-        this.groupSessions = groupSessions;
-    }
+    public void setGroupSessions(Integer groupSessions) { this.groupSessions = groupSessions; }
 
-    public Integer getPtSessions() {
-        return ptSessions;
-    }
+    public Integer getPtSessions() { return ptSessions; }
 
-    public void setPtSessions(Integer ptSessions) {
-        this.ptSessions = ptSessions;
-    }
+    public void setPtSessions(Integer ptSessions) { this.ptSessions = ptSessions; }
 
-    public String getStatus() {
-        return status;
-    }
+    public UserStatus getStatus() { return status; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public void setStatus(UserStatus status) { this.status = status; }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    public Instant getCreatedAt() { return createdAt; }
 
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+    protected void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    // ================= BUILDER =================
+    public Instant getUpdatedAt() { return updatedAt; }
 
+    protected void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    // ===== BUILDER =====
     public static UserBuilder builder() {
         return new UserBuilder();
     }
 
     public static final class UserBuilder {
-        private Long id;
         private String username;
         private String email;
         private String passwordHash;
@@ -183,14 +141,7 @@ public class User {
         private LocalDate expiryDate;
         private Integer groupSessions;
         private Integer ptSessions;
-        private String status;
-        
-
-
-        public UserBuilder id(Long id) {
-            this.id = id;
-            return this;
-        }
+        private UserStatus status;
 
         public UserBuilder username(String username) {
             this.username = username;
@@ -237,28 +188,23 @@ public class User {
             return this;
         }
 
-        public UserBuilder status(String status) {
+        public UserBuilder status(UserStatus status) {
             this.status = status;
             return this;
         }
 
         public User build() {
             User user = new User();
-            user.setId(id);
             user.setUsername(username);
             user.setEmail(email);
             user.setPasswordHash(passwordHash);
-            user.setRole(role);
+            user.setRole(role != null ? role : Role.USER);
             user.setFullName(fullName);
-
             user.setGymPackage(gymPackage);
             user.setExpiryDate(expiryDate);
             user.setGroupSessions(groupSessions);
             user.setPtSessions(ptSessions);
-            user.setStatus(status);
-
-            // user.setCreatedAt(createdAt);
-            // user.setUpdatedAt(updatedAt);
+            user.setStatus(status != null ? status : UserStatus.ACTIVE);
 
             return user;
         }

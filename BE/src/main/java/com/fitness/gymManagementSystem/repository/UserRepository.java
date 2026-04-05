@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.fitness.gymManagementSystem.entity.Role;
 import com.fitness.gymManagementSystem.entity.User;
+import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     
@@ -28,19 +29,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
 
-    Optional<User> findByFullname(String fullName);
+    Optional<User> findByFullName(String fullName);
+
+    List<User> findByRole(Role role);
 
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
 
-    boolean existsByFullname(String fullName);
+    boolean existsByFullName(String fullName);
+    
 
     // Tìm kiếm theo search (username hoặc email chứa chuỗi input) và role)
     // Ứng với GET /api/users?search=...&role=...
 
-    @Query("SELECT u FROM User u WHERE " + 
-        "(:search IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+    @Query("SELECT u FROM User u WHERE " +
+        "(:search IS NULL OR :search = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
         "AND (:role IS NULL OR u.role = :role)"
     )
     Page<User> findAllBySearchAndRole(@Param("search") String search, @Param("role") Role role, Pageable pageable);
