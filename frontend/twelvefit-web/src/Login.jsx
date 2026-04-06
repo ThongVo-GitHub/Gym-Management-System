@@ -1,20 +1,35 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios'; // CHÈN VÀO DÒNG 1
 
 export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mode, setMode] = useState(location.state?.mode || 'login');
-
-  const handleLogin = (e) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(''); // Để hiện thông báo nếu sai pass
+  // THAY THẾ TỪ DÒNG 12 ĐẾN 15
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+    try {
+      const response = await axios.post('/api/auth/login', {
+        username: username, // lấy từ state username
+        password: password  // lấy từ state password
+      });
+
+      // Lưu token vào máy
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Sai tài khoản hoặc mật khẩu rồi ông giáo ạ!');
+    }
   };
 
   return (
     // Đã bỏ inline font vì index.css đã set Montserrat làm mặc định
     <div className="min-h-screen flex flex-col relative text-white">
-      
+
       {/* BACKGROUND ĐEN SANG TRỌNG */}
       <div className="fixed inset-0 z-[-1] overflow-hidden bg-black">
         <div
@@ -26,7 +41,7 @@ export default function Login() {
 
       <div className="flex-grow flex items-center justify-center p-4">
         <div className="max-w-[1200px] w-full flex flex-col lg:flex-row items-center justify-between gap-12 z-10">
-          
+
           {/* CỘT BÊN TRÁI: LOGO & SLOGAN */}
           <div className="lg:w-[55%] w-full lg:pr-10">
             <div className="flex items-center mb-8">
@@ -37,7 +52,7 @@ export default function Login() {
                 TWELVE<span className="text-[#d03030]">FIT</span>
               </h3>
             </div>
-            
+
             <div className="font-bold text-4xl md:text-[3.5rem] lg:text-[4rem] leading-[1.15] tracking-tight drop-shadow-2xl">
               {/* Áp dụng font Raleway (font-tagline) cho Slogan */}
               <div className="text-white font-tagline">Thay đổi cơ thể,</div>
@@ -47,7 +62,7 @@ export default function Login() {
                 <span className="text-[#d03030] font-serif-luxury">TwelveFit.</span>
               </div>
             </div>
-            
+
             <div className="mt-10 flex items-center bg-white/5 backdrop-blur-sm p-2 pr-6 rounded-full border border-white/10 w-max">
               <div className="flex -space-x-3">
                 <img className="w-10 h-10 rounded-full border-2 border-[#111]" src="https://i.pravatar.cc/100?img=12" alt="User" />
@@ -65,60 +80,66 @@ export default function Login() {
               <h5 className="text-center font-bold text-xl mb-8 text-white tracking-wide">
                 {mode === 'login' ? 'Đăng nhập thành viên' : 'Đăng ký hội viên mới'}
               </h5>
-              
-              <form className="space-y-4">
+              {/* CHÈN VÀO ĐÂY (KHOẢNG DÒNG 74) */}
+              {error && <p className="text-[#d03030] text-center text-xs mb-4 font-bold">{error}</p>}
+              <form className="space-y-4" onSubmit={handleLogin}>
                 {mode === 'register' && (
-                  <input 
-                    type="text" 
-                    className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
-                    placeholder="Họ và tên" 
+                  <input
+                    type="text"
+                    className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all"
+                    placeholder="Họ và tên"
                   />
                 )}
-                <input 
-                  type="text" 
-                  className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
-                  placeholder="Email hoặc ID" 
+                <input
+                  type="text"
+                  value={username} // THÊM DÒNG NÀY (KHOẢNG DÒNG 86)
+                  onChange={(e) => setUsername(e.target.value)} // THÊM DÒNG NÀY (KHOẢNG DÒNG 87)
+                  className="w-full bg-[#1a1a1a]/80 ..."
+                  placeholder="Email hoặc ID"
                 />
-                <input 
-                  type="password" 
-                  className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
-                  placeholder="Mật khẩu" 
+                <input
+                  type="password"
+                  value={password} // THÊM DÒNG NÀY (KHOẢNG DÒNG 93)
+                  onChange={(e) => setPassword(e.target.value)} // THÊM DÒNG NÀY (KHOẢNG DÒNG 94)
+                  className="w-full bg-[#1a1a1a]/80 ..."
+                  placeholder="Mật khẩu"
                 />
-                
+
                 {mode === 'login' && (
                   <div className="text-right">
-                    <button type="button" className="text-gray-400 hover:text-white text-[12px] font-medium transition-colors">
+                    <button type="submit" className="text-gray-400 hover:text-white text-[12px] font-medium transition-colors">
                       Quên mật khẩu?
                     </button>
                   </div>
                 )}
-                
+
                 {mode === 'register' && (
-                  <input 
-                    type="password" 
-                    className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all" 
-                    placeholder="Xác nhận mật khẩu" 
+                  <input
+                    type="password"
+                    className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all"
+                    placeholder="Xác nhận mật khẩu"
                   />
                 )}
-                
+
                 <button type="button" onClick={handleLogin} className="w-full bg-[#d03030] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#b52a2a] hover:scale-[1.02] active:scale-95 transition-all mt-2 tracking-widest uppercase text-sm">
                   {mode === 'login' ? 'ĐĂNG NHẬP' : 'HOÀN TẤT ĐĂNG KÝ'}
                 </button>
-                
+
                 <div className="flex items-center py-2">
                   <hr className="flex-grow border-gray-700" />
                   <span className="px-4 text-[10px] text-gray-500 uppercase tracking-widest">Hoặc</span>
                   <hr className="flex-grow border-gray-700" />
                 </div>
-                
-                <button 
-                  type="button" 
+
+                <button
+                  type="button"
                   onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
                   className="w-full bg-[#2a2a2a]/80 text-white font-bold py-4 rounded-xl border border-gray-600 hover:bg-[#333] hover:scale-[1.02] active:scale-95 transition-all tracking-widest uppercase text-sm"
                 >
                   {mode === 'login' ? 'TẠO TÀI KHOẢN MỚI' : 'ĐÃ CÓ TÀI KHOẢN'}
                 </button>
               </form>
+
             </div>
           </div>
 

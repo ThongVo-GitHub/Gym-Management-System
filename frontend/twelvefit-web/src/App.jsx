@@ -46,3 +46,27 @@ function App() {
 }
 
 export default App;
+// import { useEffect, useState } from 'react';
+
+// function App() {
+//   const [message, setMessage] = useState("");
+
+//   useEffect(() => {
+//     // Gọi đến địa chỉ mặc định của Spring Boot
+//     fetch("http://localhost:8080/")
+//       .then((response) => response.text())
+//       .then((data) => {
+//         setMessage(data);
+//       })
+//       .catch((error) => console.error("Lỗi kết nối:", error));
+//   }, []);
+// ß
+//   return (
+//     <div className="p-10 text-center">
+//       <h1 className="text-2xl font-bold">TwelveFit System</h1>
+//       <p className="mt-4 text-blue-600">Backend says: {message}</p>
+//     </div>
+//   );
+// }
+
+// export default App;
