@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite' // THÊM DÒNG NÀY
+import tailwindcss from '@tailwindcss/vite' //tailwind bản mới đã được tích hợp
 
 export default defineConfig({
   plugins: [

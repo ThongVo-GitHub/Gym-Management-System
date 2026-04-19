@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import Homepage from './Homepage';
 import Login from './Login';
@@ -12,6 +12,14 @@ import Packages from './Packages';
 import Setting from './Setting';
 import Branch from './Branch';
 
+const RequireAuth = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token || token === 'null' || token === 'undefined') {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -23,7 +31,7 @@ function App() {
         {/* =========================================
             KHU VỰC ADMIN (Có thanh menu đen bên trái) 
             ========================================= */}
-        <Route element={<AppLayout />}>
+        <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route path="/dashboard" element={<MemberDashboard />} /> 
           <Route path="/members" element={<MemberManagement />} />
           
