@@ -12,15 +12,15 @@
 
 | Thành viên | MSSV | Công việc | Link Commit/PR |  
 |------------|------|-----------|----------------|  
-| Võ Minh Thông | 2354050128|    
-Hoàn thiện backend: xây dựng hệ thống Authentication & Authorization (JWT), xử lý business logic, hoàn chỉnh các API chính (membership, user, package)  
+| Võ Minh Thông | 2354050128| Hoàn thiện backend: xây dựng hệ thống Authentication & Authorization (JWT), xử lý business logic, hoàn chỉnh các API chính (membership, user, package)  
 \[link\]  
-[[https://github.com/ThongVo-GitHub/Gym-Management-System/commit/615ee118475bb191ee664bfee844b1cad77bfd64](https://github.com/ThongVo-GitHub/Gym-Management-System/commit/615ee118475bb191ee664bfee844b1cad77bfd64)](https://github.com/ThongVo-GitHub/Gym-Management-System/commit/1c092cb1fdcccec054b9bad527516d8771d16a84)
+[https://github.com/ThongVo-GitHub/Gym-Management-System/commit/1c092cb1fdcccec054b9bad527516d8771d16a84](https://github.com/ThongVo-GitHub/Gym-Management-System/commit/1c092cb1fdcccec054b9bad527516d8771d16a84)
 
 | Lê Dư Như Ý | 2354050175| Kết nối BE với FE, test các api chức năng.   
 \[link\] [https://github.com/ThongVo-GitHub/Gym-Management-System/commit/ab399509595ddaa8679f3ba6aa10e73fb92d8cb0](https://github.com/ThongVo-GitHub/Gym-Management-System/commit/ab399509595ddaa8679f3ba6aa10e73fb92d8cb0) 
 
-| Lê Nhật Vy | 2354050171| Kết nối FE với BE \[link\]   
+| Lê Nhật Vy | 2354050171| Kết nối FE với BE 
+\[link\]   
 [https://github.com/ThongVo-GitHub/Gym-Management-System/tree/44a33b3a2fa7ab20c571353fcf512ba7d3e57a11/frontend/twelvefit-web](https://github.com/ThongVo-GitHub/Gym-Management-System/tree/44a33b3a2fa7ab20c571353fcf512ba7d3e57a11/frontend/twelvefit-web) 
 
 | Trần Hoàng Anh Khuê | 2354050057 |   
