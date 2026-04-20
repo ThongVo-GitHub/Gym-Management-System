@@ -73,6 +73,12 @@ public class SecurityConfig {
 
                 // ===== CÒN LẠI =====
                 .anyRequest().authenticated()
+                
+                .requestMatchers(HttpMethod.GET, "/api/users/**")
+                    .hasAnyRole("USER", "ADMIN")
+
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**")
+                    .hasRole("ADMIN")
             )
 
             // 🔥 HANDLE ERROR

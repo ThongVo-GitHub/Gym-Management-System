@@ -1,7 +1,6 @@
 package com.fitness.gymManagementSystem.entity;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,13 +33,6 @@ public class User {
 
     @Column(name = "full_name", length = 100)
     private String fullName;
-
-    // ===== GYM =====
-    @Column(name = "gym_package", length = 50)
-    private String gymPackage;
-
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
 
     @Column(name = "group_sessions")
     private Integer groupSessions;
@@ -98,13 +90,7 @@ public class User {
 
     public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getGymPackage() { return gymPackage; }
-
-    public void setGymPackage(String gymPackage) { this.gymPackage = gymPackage; }
-
-    public LocalDate getExpiryDate() { return expiryDate; }
-
-    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    
 
     public Integer getGroupSessions() { return groupSessions; }
 
@@ -137,8 +123,6 @@ public class User {
         private String passwordHash;
         private Role role;
         private String fullName;
-        private String gymPackage;
-        private LocalDate expiryDate;
         private Integer groupSessions;
         private Integer ptSessions;
         private UserStatus status;
@@ -168,15 +152,6 @@ public class User {
             return this;
         }
 
-        public UserBuilder gymPackage(String gymPackage) {
-            this.gymPackage = gymPackage;
-            return this;
-        }
-
-        public UserBuilder expiryDate(LocalDate expiryDate) {
-            this.expiryDate = expiryDate;
-            return this;
-        }
 
         public UserBuilder groupSessions(Integer groupSessions) {
             this.groupSessions = groupSessions;
@@ -200,8 +175,6 @@ public class User {
             user.setPasswordHash(passwordHash);
             user.setRole(role != null ? role : Role.USER);
             user.setFullName(fullName);
-            user.setGymPackage(gymPackage);
-            user.setExpiryDate(expiryDate);
             user.setGroupSessions(groupSessions);
             user.setPtSessions(ptSessions);
             user.setStatus(status != null ? status : UserStatus.ACTIVE);

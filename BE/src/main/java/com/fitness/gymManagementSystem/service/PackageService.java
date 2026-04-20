@@ -1,52 +1,91 @@
 package com.fitness.gymManagementSystem.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.fitness.gymManagementSystem.entity.Package;
+import com.fitness.gymManagementSystem.dto.PackageRequest;
+import com.fitness.gymManagementSystem.dto.PackageResponse;
+import com.fitness.gymManagementSystem.entity.GymPackage;
 import com.fitness.gymManagementSystem.repository.PackageRepository;
 
 @Service
 public class PackageService {
 
-    @Autowired
-    private PackageRepository packageRepository;
+    private final PackageRepository packageRepository;
 
-    // Thêm gói tập
-    public Package addPackage(Package pack) {
-        return packageRepository.save(pack);
+    public PackageService(PackageRepository packageRepository) {
+        this.packageRepository = packageRepository;
     }
 
-    // Lấy tất cả gói tập
-    public List<Package> getAllPackages() {
-        return packageRepository.findAll();
+    @Transactional
+    public PackageResponse addPackage(PackageRequest request) {
+        if (packageRepository.existsByPackageName(request.packageName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tên gói đã tồn tại");
+        }
+        GymPackage pack = toEntity(request);
+        return toResponse(packageRepository.save(pack));
     }
 
-    // Lấy gói theo ID
-    public Package getPackageById(String id) {
+    @Transactional(readOnly = true)
+    public List<PackageResponse> getAllPackages() {
+        return packageRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PackageResponse getPackageById(Long id) {
         return packageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Package not found"));
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy gói tập"));
     }
 
-    // Xóa gói
-    public void deletePackage(String id) {
+    @Transactional
+    public PackageResponse updatePackage(Long id, PackageRequest request) {
+        GymPackage existing = packageRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Không tìm thấy gói tập"));
+
+        existing.setPackageName(request.packageName());
+        existing.setPrice(request.price());
+        existing.setDurationMonths(request.durationMonths());
+        existing.setDescription(request.description());
+
+        return toResponse(packageRepository.save(existing));
+    }
+
+    @Transactional
+    public void deletePackage(Long id) {
         if (!packageRepository.existsById(id)) {
-            throw new RuntimeException("Package not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy gói tập");
         }
         packageRepository.deleteById(id);
     }
 
-    // Update gói
-    public Package updatePackage(String id, Package newPack) {
-        Package existing = packageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Package not found"));
+    // ── helpers ─────────────────────────────────────────────────────────────
+    private GymPackage toEntity(PackageRequest req) {
+        GymPackage pack = new GymPackage();
+        pack.setPackageName(req.packageName());
+        pack.setPrice(req.price());
+        pack.setDurationMonths(req.durationMonths());
+        pack.setDescription(req.description());
+        return pack;
+    }
 
-        existing.setPackageName(newPack.getPackageName());
-        existing.setPrice(newPack.getPrice());
-        existing.setDurationMonths(newPack.getDurationMonths());
-
-        return packageRepository.save(existing);
+    public PackageResponse toResponse(GymPackage p) {
+        return new PackageResponse(
+            p.getId(),
+            p.getPackageName(),
+            p.getPrice(),
+            p.getDurationMonths(),
+            p.getDescription()
+        );
     }
 }

@@ -1,10 +1,10 @@
 package com.fitness.gymManagementSystem.exception;
 
-public class DuplicateResourceException extends RuntimeException {
+public class ForbiddenException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public DuplicateResourceException(String message) {
+    public ForbiddenException(String message) {
         super(message);
     }
 }

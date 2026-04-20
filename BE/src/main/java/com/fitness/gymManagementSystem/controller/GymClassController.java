@@ -1,60 +1,74 @@
-// package com.fitness.gymManagementSystem.controller;
+package com.fitness.gymManagementSystem.controller;
 
-// import java.security.Principal;
-// import java.util.List;
+import java.security.Principal;
+import java.util.List;
 
-// import org.springframework.http.ResponseEntity;
-// import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-// import com.fitness.gymManagementSystem.dto.CreateClassRequest;
-// import com.fitness.gymManagementSystem.dto.GymClassResponse;
-// import com.fitness.gymManagementSystem.service.GymClassService;
+import com.fitness.gymManagementSystem.dto.*;
+import com.fitness.gymManagementSystem.entity.ClassBooking;
+import com.fitness.gymManagementSystem.service.GymClassService;
+import com.fitness.gymManagementSystem.service.BookingService;
 
-// @RestController
-// @RequestMapping("/api/classes")
-// public class GymClassController {
+@RestController
+@RequestMapping("/api/classes")
+public class GymClassController {
 
-//     private final GymClassService gymClassService;
+    private final GymClassService gymClassService;
+    private final BookingService bookingService;
 
-//     public GymClassController(GymClassService gymClassService) {
-//         this.gymClassService = gymClassService;
-//     }
+    public GymClassController(GymClassService gymClassService,
+                            BookingService bookingService) {
+        this.gymClassService = gymClassService;
+        this.bookingService = bookingService;
+    }
 
+    @PostMapping
+    public ResponseEntity<GymClassResponse> createClass(
+            @Valid @RequestBody CreateClassRequest request,
+            Principal principal) {
 
-//     @PostMapping
-//     public ResponseEntity<GymClassResponse> createClass(
-//             @RequestBody CreateClassRequest request,
-//             Principal principal) {
+        return ResponseEntity.ok(
+                gymClassService.mapToResponse(
+                        gymClassService.createClass(request, principal.getName())
+                )
+        );
+    }
 
-//         String username = principal.getName();
+    @PostMapping("/{id}/book")
+    public ResponseEntity<BookingResponse> book(
+            @PathVariable Long id,
+            Principal principal) {
 
-//         return ResponseEntity.ok(
-//                 gymClassService.mapToResponse(
-//                         gymClassService.createClass(request, username)
-//                 )
-//         );
-//     }
+        ClassBooking booking = bookingService.book(id, principal.getName());
 
-//     // 🔥 USER book lớp
-//     @PostMapping("/{id}/book")
-//     public ResponseEntity<String> bookClass(
-//             @PathVariable Long id,
-//             Principal principal) {
+        return ResponseEntity.ok(new BookingResponse(
+                booking.getId(),
+                booking.getGymClass().getId(),
+                booking.getGymClass().getName(),
+                "Đăng ký lớp thành công",
+                booking.getBookedAt()
+        ));
+    }
 
-//         gymClassService.book(id, principal.getName());
+    @DeleteMapping("/{id}/cancel")
+    public ResponseEntity<?> cancel(
+            @PathVariable Long id,
+            Principal principal) {
 
-//         return ResponseEntity.ok("Đăng ký lớp thành công");
-//     }
+        bookingService.cancel(id, principal.getName());
+        return ResponseEntity.ok("Hủy thành công");
+    }
 
-//     // 🔥 GET ALL
-//     @GetMapping
-//     public ResponseEntity<List<GymClassResponse>> getAll() {
-//         return ResponseEntity.ok(gymClassService.getAll());
-//     }
+    @GetMapping
+    public ResponseEntity<List<GymClassResponse>> getAll() {
+        return ResponseEntity.ok(gymClassService.getAll());
+    }
 
-//     // 🔥 GET DETAIL
-//     @GetMapping("/{id}")
-//     public ResponseEntity<GymClassResponse> getById(@PathVariable Long id) {
-//         return ResponseEntity.ok(gymClassService.getById(id));
-//     }
-// }
+    @GetMapping("/{id}")
+    public ResponseEntity<GymClassResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(gymClassService.getById(id));
+    }
+}

@@ -1,13 +1,15 @@
 package com.fitness.gymManagementSystem.dto;
 
-public class BuyMembershipRequest {
-    private String packageId;
-    private String paymentMethod;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
-    public BuyMembershipRequest() {}
+public record BuyMembershipRequest(
 
-    public String getPackageId() { return packageId; }
-    public void setPackageId(String packageId) { this.packageId = packageId; }
-    public String getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
-}
+    @NotNull(message = "Package ID không được để trống")
+    @Positive(message = "Package ID không hợp lệ")
+    Long packageId,
+
+    
+    String paymentMethod
+
+) {}

@@ -1,51 +1,57 @@
-// package com.fitness.gymManagementSystem.dto;
+package com.fitness.gymManagementSystem.dto;
 
-// import java.time.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fitness.gymManagementSystem.entity.ClassStatus;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
-// public class GymClassResponse {
+public class GymClassResponse {
 
-//     private Long id;
-//     private String name;
-//     private LocalDate date;
-//     private LocalTime startTime;
-//     private LocalTime endTime;
-//     private String studio;
-//     private Integer maxCapacity;
-//     private Integer currentCapacity;
-//     private String trainerName;
-//     private String status;
+    private Long id;
+    private String name;
 
-//     public GymClassResponse() {}
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate date;
 
-//     // ===== GETTER & SETTER =====
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime startTime;
 
-//     public Long getId() { return id; }
-//     public void setId(Long id) { this.id = id; }
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime endTime;
 
-//     public String getName() { return name; }
-//     public void setName(String name) { this.name = name; }
+    private String studio;
+    private Integer maxCapacity;
+    private Integer currentCapacity;
+    private Integer spotsLeft;          // tiện cho frontend
+    private String trainerName;
+    private ClassStatus status;
 
-//     public LocalDate getDate() { return date; }
-//     public void setDate(LocalDate date) { this.date = date; }
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
+    private java.time.Instant createdAt;
 
-//     public LocalTime getStartTime() { return startTime; }
-//     public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
-
-//     public LocalTime getEndTime() { return endTime; }
-//     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
-
-//     public String getStudio() { return studio; }
-//     public void setStudio(String studio) { this.studio = studio; }
-
-//     public Integer getMaxCapacity() { return maxCapacity; }
-//     public void setMaxCapacity(Integer maxCapacity) { this.maxCapacity = maxCapacity; }
-
-//     public Integer getCurrentCapacity() { return currentCapacity; }
-//     public void setCurrentCapacity(Integer currentCapacity) { this.currentCapacity = currentCapacity; }
-
-//     public String getTrainerName() { return trainerName; }
-//     public void setTrainerName(String trainerName) { this.trainerName = trainerName; }
-
-//     public String getStatus() { return status; }
-//     public void setStatus(String status) { this.status = status; }
-// }
+    // ===== GETTERS & SETTERS =====
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
+    public LocalTime getStartTime() { return startTime; }
+    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
+    public LocalTime getEndTime() { return endTime; }
+    public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
+    public String getStudio() { return studio; }
+    public void setStudio(String studio) { this.studio = studio; }
+    public Integer getMaxCapacity() { return maxCapacity; }
+    public void setMaxCapacity(Integer maxCapacity) { this.maxCapacity = maxCapacity; }
+    public Integer getCurrentCapacity() { return currentCapacity; }
+    public void setCurrentCapacity(Integer currentCapacity) { this.currentCapacity = currentCapacity; }
+    public Integer getSpotsLeft() { return spotsLeft; }
+    public void setSpotsLeft(Integer spotsLeft) { this.spotsLeft = spotsLeft; }
+    public String getTrainerName() { return trainerName; }
+    public void setTrainerName(String trainerName) { this.trainerName = trainerName; }
+    public ClassStatus getStatus() { return status; }
+    public void setStatus(ClassStatus status) { this.status = status; }
+    public java.time.Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
+}

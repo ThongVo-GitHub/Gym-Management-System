@@ -44,6 +44,7 @@ public class JwtService {
     private String buildToken(String subject, long expirationMs) {
         return Jwts.builder()
         .subject(subject)
+        .issuer("gym-api")
         .issuedAt(new Date(System.currentTimeMillis()))
         .expiration(new Date(System.currentTimeMillis() + expirationMs))
         .signWith(getSigningKey())

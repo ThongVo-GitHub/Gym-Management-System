@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.fitness.gymManagementSystem.config.JwtProperties;
-import com.fitness.gymManagementSystem.dto.AuthReponse;
+import com.fitness.gymManagementSystem.dto.AuthResponse;
 import com.fitness.gymManagementSystem.dto.LoginRequest;
 import com.fitness.gymManagementSystem.dto.RegisterRequest;
 import com.fitness.gymManagementSystem.dto.UserResponse;
@@ -72,7 +72,7 @@ public class AuthService {
 
     }
 
-    public AuthReponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         // 1. Tìm user theo username hoặc Email {"usernameOrEmail": "admin", "password": "admin123"}
         User user = userRepository.findByUsername(request.usernameOrEmail())
                     .or(() ->  userRepository.findByEmail(request.usernameOrEmail()))
@@ -92,7 +92,7 @@ public class AuthService {
         log.info("User logged in: {}", user.getUsername());
 
         // 5. Trả về AuthResponse
-        return AuthReponse.of(
+        return AuthResponse.of(
             accessToken,
             refreshToken,
             "Bearer",

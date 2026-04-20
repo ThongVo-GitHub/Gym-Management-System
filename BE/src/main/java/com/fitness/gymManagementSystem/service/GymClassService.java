@@ -1,167 +1,130 @@
-// package com.fitness.gymManagementSystem.service;
+package com.fitness.gymManagementSystem.service;
+    
+import com.fitness.gymManagementSystem.dto.CreateClassRequest;
+import com.fitness.gymManagementSystem.dto.GymClassResponse;
+import com.fitness.gymManagementSystem.entity.*;
+import com.fitness.gymManagementSystem.exception.ResourceNotFoundException;
+import com.fitness.gymManagementSystem.repository.*;
+    
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+    
+import java.util.List;
 
-// import java.util.List;
+    
+@Service
+public class GymClassService {
 
-// import org.springframework.stereotype.Service;
-// import org.springframework.transaction.annotation.Transactional;
+    private final GymClassRepository gymClassRepository;
+    private final UserRepository userRepository;
 
-// import com.fitness.gymManagementSystem.dto.CreateClassRequest;
-// import com.fitness.gymManagementSystem.dto.GymClassResponse;
-// import com.fitness.gymManagementSystem.entity.ClassBooking;
-// import com.fitness.gymManagementSystem.entity.ClassStatus;
-// import com.fitness.gymManagementSystem.entity.GymClass;
-// import com.fitness.gymManagementSystem.entity.Role;
-// import com.fitness.gymManagementSystem.entity.User;
-// import com.fitness.gymManagementSystem.entity.UserStatus;
-// import com.fitness.gymManagementSystem.exception.DuplicateResourceException;
-// import com.fitness.gymManagementSystem.exception.ResourceNotFoundException;
-// import com.fitness.gymManagementSystem.repository.ClassBookingRepository;
-// import com.fitness.gymManagementSystem.repository.GymClassRepository;
-// import com.fitness.gymManagementSystem.repository.UserRepository;
+    public GymClassService(GymClassRepository gymClassRepository,
+                        UserRepository userRepository) {
+        this.gymClassRepository = gymClassRepository;
+        this.userRepository = userRepository;
+    }
 
-// @Service
-// public class GymClassService {
+    // ── CREATE CLASS ─────────────────────────────────
+    @Transactional
+    public GymClass createClass(CreateClassRequest req, String trainerUsername) {
 
-//     private final GymClassRepository gymClassRepository;
-//     private final UserRepository userRepository;
-//     private final ClassBookingRepository bookingRepository;
+        if (!req.getEndTime().isAfter(req.getStartTime())) {
+            throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu");
+        }
 
-//     public GymClassService(
-//             GymClassRepository gymClassRepository,
-//             UserRepository userRepository,
-//             ClassBookingRepository bookingRepository) {
+        User trainer = userRepository.findByUsername(trainerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Trainer", trainerUsername));
 
-//         this.gymClassRepository = gymClassRepository;
-//         this.userRepository = userRepository;
-//         this.bookingRepository = bookingRepository;
-//     }
+        var conflicts = gymClassRepository.findConflictingClasses(
+                trainer.getId(), req.getDate(), req.getStartTime(), req.getEndTime());
 
-//     // ================== MAPPER ==================
-//     private GymClassResponse mapToResponse(GymClass gymClass) {
-//         GymClassResponse res = new GymClassResponse();
+        if (!conflicts.isEmpty()) {
+            throw new IllegalStateException("Trainer đã có lớp trong khung giờ này");
+        }
 
-//         res.setId(gymClass.getId());
-//         res.setName(gymClass.getName());
-//         res.setDate(gymClass.getDate());
-//         res.setStartTime(gymClass.getStartTime());
-//         res.setEndTime(gymClass.getEndTime());
-//         res.setStudio(gymClass.getStudio());
-//         res.setMaxCapacity(gymClass.getMaxCapacity());
-//         res.setCurrentCapacity(gymClass.getCurrentCapacity());
-//         res.setStatus(gymClass.getStatus().name());
+        GymClass gymClass = new GymClass();
+        gymClass.setName(req.getName());
+        gymClass.setDate(req.getDate());
+        gymClass.setStartTime(req.getStartTime());
+        gymClass.setEndTime(req.getEndTime());
+        gymClass.setStudio(req.getStudio());
+        gymClass.setMaxCapacity(req.getMaxCapacity());
+        gymClass.setCurrentCapacity(0);
+        gymClass.setTrainer(trainer);
+        gymClass.setStatus(ClassStatus.OPEN);
 
-//         if (gymClass.getTrainer() != null) {
-//             res.setTrainerName(gymClass.getTrainer().getUsername());
-//         }
+        return gymClassRepository.save(gymClass);
+    }
 
-//         return res;
-//     }
+    // ── GET ALL ─────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<GymClassResponse> getAll() {
+        return gymClassRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 
-//     // ================== CREATE CLASS ==================
-//     @Transactional
-//     public GymClassResponse createClass(CreateClassRequest req, String username) {
+    // ── GET BY ID ───────────────────────────────
+    @Transactional(readOnly = true)
+    public GymClass getEntityById(Long id) {
+        return gymClassRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("GymClass", id));
+    }
 
-//         User trainer = userRepository.findByUsername(username)
-//                 .orElseThrow(() -> new ResourceNotFoundException("Trainer not found"));
+    @Transactional(readOnly = true)
+    public GymClassResponse getById(Long id) {
+        return mapToResponse(getEntityById(id));
+    }
 
-//         if (trainer.getStatus() != UserStatus.ACTIVE) {
-//             throw new RuntimeException("User is not active");
-//         }
+    // ── CAPACITY LOGIC (dùng cho BookingService) ──
+    @Transactional
+    public void increaseCapacity(GymClass gymClass) {
+        int updated = gymClass.getCurrentCapacity() + 1;
+        gymClass.setCurrentCapacity(updated);
 
-//         if (trainer.getRole() != Role.TRAINER) {
-//             throw new RuntimeException("Chỉ TRAINER được tạo lớp");
-//         }
+        if (updated >= gymClass.getMaxCapacity()) {
+            gymClass.setStatus(ClassStatus.FULL);
+        }
 
-//         List<GymClass> conflicts = gymClassRepository.findConflictingClasses(
-//                 trainer.getId(),
-//                 req.getDate(),
-//                 req.getStartTime(),
-//                 req.getEndTime()
-//         );
+        gymClassRepository.save(gymClass);
+    }
 
-//         if (!conflicts.isEmpty()) {
-//             throw new DuplicateResourceException("Trùng lịch giảng dạy");
-//         }
+    @Transactional
+    public void decreaseCapacity(GymClass gymClass) {
+        int current = gymClass.getCurrentCapacity();
 
-//         GymClass gymClass = new GymClass();
-//         gymClass.setName(req.getName());
-//         gymClass.setDate(req.getDate());
-//         gymClass.setStartTime(req.getStartTime());
-//         gymClass.setEndTime(req.getEndTime());
-//         gymClass.setStudio(req.getStudio());
-//         gymClass.setMaxCapacity(req.getMaxCapacity());
-//         gymClass.setCurrentCapacity(0);
-//         gymClass.setTrainer(trainer); // 🔥 QUAN TRỌNG
-//         gymClass.setStatus(ClassStatus.OPEN);
+        if (current > 0) {
+            gymClass.setCurrentCapacity(current - 1);
+        }
 
-//         GymClass saved = gymClassRepository.save(gymClass);
+        if (gymClass.getStatus() == ClassStatus.FULL) {
+            gymClass.setStatus(ClassStatus.OPEN);
+        }
 
-//         return mapToResponse(saved);
-//     }
+        gymClassRepository.save(gymClass);
+    }
 
-//     // ================== BOOK ==================
-//     @Transactional
-//     public void book(Long classId, String username) {
+    // ── MAPPER ─────────────────────────────────
+    public GymClassResponse mapToResponse(GymClass g) {
+        GymClassResponse res = new GymClassResponse();
+        res.setId(g.getId());
+        res.setName(g.getName());
+        res.setDate(g.getDate());
+        res.setStartTime(g.getStartTime());
+        res.setEndTime(g.getEndTime());
+        res.setStudio(g.getStudio());
+        res.setMaxCapacity(g.getMaxCapacity());
+        res.setCurrentCapacity(g.getCurrentCapacity());
+        res.setSpotsLeft(g.getMaxCapacity() - g.getCurrentCapacity());
+        res.setStatus(g.getStatus());
+        res.setCreatedAt(g.getCreatedAt());
 
-//         GymClass gymClass = gymClassRepository.findById(classId)
-//                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
+        if (g.getTrainer() != null) {
+            res.setTrainerName(g.getTrainer().getUsername());
+        }
 
-//         User user = userRepository.findByUsername(username)
-//                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-//         if (user.getStatus() != UserStatus.ACTIVE) {
-//             throw new RuntimeException("User is not active");
-//         }
-
-//         if (gymClass.getCurrentCapacity() >= gymClass.getMaxCapacity()) {
-//             throw new RuntimeException("Lớp đã đầy");
-//         }
-
-//         if (bookingRepository.existsByUserAndGymClass(user, gymClass)) {
-//             throw new DuplicateResourceException("Đã đăng ký rồi");
-//         }
-
-//         List<ClassBooking> conflicts = bookingRepository.findUserConflicts(
-//                 user.getId(),
-//                 gymClass.getDate(),
-//                 gymClass.getStartTime(),
-//                 gymClass.getEndTime()
-//         );
-
-//         if (!conflicts.isEmpty()) {
-//             throw new DuplicateResourceException("Bạn bị trùng lịch");
-//         }
-
-//         ClassBooking booking = new ClassBooking();
-//         booking.setUser(user);
-//         booking.setGymClass(gymClass);
-
-//         int current = gymClass.getCurrentCapacity();
-//         int max = gymClass.getMaxCapacity();
-
-//         gymClass.setCurrentCapacity(current + 1);
-
-//         if (current + 1 >= max) {
-//             gymClass.setStatus(ClassStatus.FULL);
-//         }
-
-//         bookingRepository.save(booking);
-//         gymClassRepository.save(gymClass);
-//     }
-
-//     // ================== GET ALL ==================
-//     public List<GymClassResponse> getAll() {
-//         return gymClassRepository.findAll()
-//                 .stream()
-//                 .map(this::mapToResponse)
-//                 .toList();
-//     }
-
-//     // ================== GET BY ID ==================
-//     public GymClassResponse getById(Long id) {
-//         GymClass gymClass = gymClassRepository.findById(id)
-//                 .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
-
-//         return mapToResponse(gymClass);
-//     }
-// }
+        return res;
+    }
+}
+    

@@ -3,26 +3,26 @@ package com.fitness.gymManagementSystem.dto;
 /*
 * Reponse sau đăng nhập / refresh
 */
-public record AuthReponse(
+public record AuthResponse(
     String accessToken,
     String refreshToken,
     String tokenType,
     Long expiresInSeconds,
     UserResponse user
 ) {
-    public AuthReponse {
+    public AuthResponse {
         if (tokenType == null || tokenType.isBlank()) {
             tokenType = "Bearer";
         }
     }
 
-    public static AuthReponse of(
+    public static AuthResponse of(
         String accessToken,
         String refreshToken,
         String tokenType,
         Long expiresInSeconds,
         UserResponse user
     ) {
-        return new AuthReponse(accessToken, refreshToken, tokenType, expiresInSeconds, user);
+        return new AuthResponse(accessToken, refreshToken, tokenType, expiresInSeconds, user);
     }
 }

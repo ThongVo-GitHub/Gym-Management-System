@@ -1,50 +1,47 @@
-// package com.fitness.gymManagementSystem.entity;
+package com.fitness.gymManagementSystem.entity;
 
-// import jakarta.persistence.*;
-// import java.time.Instant;
+import jakarta.persistence.*;
+import java.time.Instant;
 
-// @Entity
-// public class ClassBooking {
+@Entity
+@Table(
+    name = "class_bookings",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "gym_class_id"}),
+    indexes = {
+        @Index(name = "idx_booking_user", columnList = "user_id"),
+        @Index(name = "idx_booking_class", columnList = "gym_class_id")
+    }
+)
+public class ClassBooking {
 
-//     @Id
-//     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//     private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-//     @ManyToOne
-//     private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private User user;
 
-//     @ManyToOne
-//     private GymClass gymClass;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gym_class_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private GymClass gymClass;
 
-//     private Instant bookedAt = Instant.now();
+    @Column(nullable = false, updatable = false)
+    private Instant bookedAt;
 
-//     // ===== GETTER SETTER =====
+    @PrePersist
+    protected void onCreate() {
+        this.bookedAt = Instant.now();
+    }
 
-//     public Long getId() {
-//         return id;
-//     }
-
-//     public User getUser() {
-//         return user;
-//     }
-
-//     public void setUser(User user) {
-//         this.user = user;
-//     }
-
-//     public GymClass getGymClass() {
-//         return gymClass;
-//     }
-
-//     public void setGymClass(GymClass gymClass) {
-//         this.gymClass = gymClass;
-//     }
-
-//     public Instant getBookedAt() {
-//         return bookedAt;
-//     }
-
-//     public void setBookedAt(Instant bookedAt) {
-//         this.bookedAt = bookedAt;
-//     }
-// }
+    // ===== GETTERS & SETTERS =====
+    public Long getId() { return id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public GymClass getGymClass() { return gymClass; }
+    public void setGymClass(GymClass gymClass) { this.gymClass = gymClass; }
+    public Instant getBookedAt() { return bookedAt; }
+    public void setBookedAt(Instant bookedAt) { this.bookedAt = bookedAt; }
+}
