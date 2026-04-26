@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Sidebar({ currentUser }) {
+export default function Sidebar() {
   const location = useLocation();
 
   const menuItems = [
@@ -59,11 +59,11 @@ export default function Sidebar({ currentUser }) {
       <div className="p-6 border-t border-gray-800 bg-black/10">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-black shadow-lg border border-white/10">
-            {currentUser?.username?.charAt(0)?.toUpperCase() || 'A'}
+            AD
           </div>
           <div>
-            <p className="text-white font-black text-[11px] uppercase tracking-wider">{currentUser?.fullName || currentUser?.username || 'Admin Manager'}</p>
-            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">{currentUser ? `ID: ${currentUser.id}` : 'Đang tải...'}</p>
+            <p className="text-white font-black text-[11px] uppercase tracking-wider">Admin Manager</p>
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">ID: 125039</p>
           </div>
         </div>
         
