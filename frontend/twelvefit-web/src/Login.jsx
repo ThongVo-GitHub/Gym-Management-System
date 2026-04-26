@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosClient from './api/axiosClient';
 
@@ -10,16 +10,49 @@ export default function Login() {
   // LOGIC: State quản lý dữ liệu nhập vào
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState(''); // Thêm để đăng ký
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Reset form khi chuyển mode
+  useEffect(() => {
+    setUsername('');
+    setPassword('');
+    setEmail('');
+    setFullName('');
+    setError('');
+  }, [mode]);
+
+  // Validation functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    return password.length >= 8;
+  };
+
+  const validateUsername = (username) => {
+    return username.length >= 3;
+  };
 
   // HÀM XỬ LÝ CHUNG CHO CẢ ĐĂNG KÝ VÀ ĐĂNG NHẬP
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       if (mode === 'login') {
+        // Validation login
+        if (!username || !password) {
+          setError('Vui lòng điền đầy đủ tài khoản và mật khẩu');
+          setLoading(false);
+          return;
+        }
+
         // GỌI API LOGIN
         const response = await axiosClient.post('/auth/login', {
           usernameOrEmail: username,
@@ -33,20 +66,56 @@ export default function Login() {
         alert("Chào mừng bạn đến với TwelveFit!");
         navigate('/dashboard');
       } else {
-        // GỌI API REGISTER (Dựa trên UserController bạn gửi nãy)
-        await axiosClient.post('/users/register', {
-          username: username,
+        // Validation register
+        if (!username || !password || !email || !fullName) {
+          setError('Vui lòng điền đầy đủ tất cả thông tin');
+          setLoading(false);
+          return;
+        }
+
+        if (!validateUsername(username)) {
+          setError('Username phải có ít nhất 3 ký tự');
+          setLoading(false);
+          return;
+        }
+
+        if (!validatePassword(password)) {
+          setError('Mật khẩu phải có ít nhất 8 ký tự');
+          setLoading(false);
+          return;
+        }
+
+        if (!validateEmail(email)) {
+          setError('Email không hợp lệ (ví dụ: user@example.com)');
+          setLoading(false);
+          return;
+        }
+
+        // GỌI API REGISTER
+        const response = await axiosClient.post('/auth/register', {
+          username: username.trim(),
           password: password,
-          fullName: fullName,
-          email: username, // Tạm lấy username làm email nếu chưa có ô email riêng
+          fullName: fullName.trim(),
+          email: email.trim(),
           role: "USER"
         });
-        alert("Đăng ký thành công! Giờ thì hãy đăng nhập nhé.");
-        setMode('login'); // Chuyển về mode login sau khi đký xong
+
+        if (response.status === 200 || response.status === 201) {
+          alert("Đăng ký thành công! Giờ thì hãy đăng nhập nhé.");
+          setMode('login');
+        }
       }
     } catch (err) {
-      console.error("Lỗi:", err.response?.data);
-      setError(mode === 'login' ? 'Sai tài khoản hoặc mật khẩu' : 'Đăng ký thất bại, thử lại sau!');
+      console.error("Lỗi:", err.response?.data || err.message);
+      const errorMessage = err.response?.data?.message || err.message;
+      
+      if (mode === 'login') {
+        setError(errorMessage || 'Sai tài khoản hoặc mật khẩu');
+      } else {
+        setError(errorMessage || 'Đăng ký thất bại. Kiểm tra lại thông tin hoặc liên hệ hỗ trợ!');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,9 +180,20 @@ export default function Login() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all"
-                  placeholder="Username hoặc Email"
+                  placeholder={mode === 'login' ? 'Username hoặc Email' : 'Username'}
                   required
                 />
+
+                {mode === 'register' && (
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[#1a1a1a]/80 border border-gray-700 rounded-xl px-5 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#d03030] transition-all"
+                    placeholder="Email (vd: user@example.com)"
+                    required
+                  />
+                )}
 
                 <input
                   type="password"
@@ -124,11 +204,18 @@ export default function Login() {
                   required
                 />
 
+                {mode === 'register' && (
+                  <p className="text-xs text-gray-400 px-2 mt-1">
+                    Yêu cầu: Username 3+ ký tự • Mật khẩu 8+ ký tự • Email hợp lệ
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full bg-[#d03030] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#b52a2a] hover:scale-[1.02] active:scale-95 transition-all mt-2 tracking-widest uppercase text-sm"
+                  disabled={loading}
+                  className="w-full bg-[#d03030] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#b52a2a] hover:scale-[1.02] active:scale-95 transition-all mt-2 tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {mode === 'login' ? 'ĐĂNG NHẬP' : 'HOÀN TẤT ĐĂNG KÝ'}
+                  {loading ? '⏳ Đang xử lý...' : (mode === 'login' ? 'ĐĂNG NHẬP' : 'HOÀN TẤT ĐĂNG KÝ')}
                 </button>
 
                 <div className="flex items-center py-2">
@@ -141,7 +228,7 @@ export default function Login() {
                   type="button"
                   onClick={() => {
                     setMode(mode === 'login' ? 'register' : 'login');
-                    setError(''); // Xóa lỗi khi chuyển mode
+                    setError('');
                   }}
                   className="w-full bg-[#2a2a2a]/80 text-white font-bold py-4 rounded-xl border border-gray-600 hover:bg-[#333] hover:scale-[1.02] active:scale-95 transition-all tracking-widest uppercase text-sm"
                 >

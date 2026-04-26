@@ -12,9 +12,34 @@ import Packages from './Packages';
 import Setting from './Setting';
 import Branch from './Branch';
 
+const parseJwt = (token) => {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => `%${('00' + c.charCodeAt(0).toString(16)).slice(-2)}`)
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
+const isTokenValid = (token) => {
+  if (!token || token === 'null' || token === 'undefined') return false;
+  const payload = parseJwt(token);
+  return payload?.exp ? Date.now() < payload.exp * 1000 : true;
+};
+
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem('token');
-  if (!token || token === 'null' || token === 'undefined') {
+  if (!isTokenValid(token)) {
+    localStorage.removeItem('token');
     return <Navigate to="/login" replace />;
   }
   return children;
