@@ -1,16 +1,45 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { api } from "@/lib/api";
 
-type Profile = Tables<"profiles">;
+interface AuthUser {
+  id: string;
+  username?: string;
+  email?: string;
+  fullName?: string;
+  role?: string;
+}
+
+export interface Profile {
+  id?: number;
+  username?: string;
+  email: string;
+  fullName: string;
+  role?: string;
+  status?: string;
+  phone?: string;
+  address?: string;
+  branch?: string;
+  memberId?: string;
+  avatarUrl?: string;
+  gymPackage: {
+    id: number;
+    name: string;      // Để em gọi được .name ở Dashboard
+    price: number;
+  };
+  expiredDate?: string;
+  groupSessions?: number;
+  ptSessions?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: { access_token: string } | null;
   profile: Profile | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,55 +48,84 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   refreshProfile: async () => {},
+  logout: () => {},
 });
 
+function decodeJwt(token: string): Record<string, any> | null {
+  try {
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<{ access_token: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setProfile(data);
-  };
+  const fetchProfile = useCallback(async () => {
+    try {
+      // BE: GET /api/auth/me -> UserResponse
+      const data = await api.get<Profile>("/auth/me");
+      setProfile(data);
+      setUser((prev) =>
+        prev
+          ? { ...prev, email: data.email || prev.email, fullName: data.fullName || prev.fullName, username: data.username }
+          : prev
+      );
+    } catch (e) {
+      console.warn("fetchProfile failed:", e);
+    }
+  }, []);
 
-  const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setSession(null); setUser(null); setProfile(null); setLoading(false);
+      return;
+    }
+
+    const payload = decodeJwt(token);
+    if (payload?.exp && payload.exp * 1000 < Date.now()) {
+      localStorage.removeItem("token");
+      setSession(null); setUser(null); setProfile(null); setLoading(false);
+      return;
+    }
+
+    setSession({ access_token: token });
+    setUser({
+      id: String(payload?.sub ?? payload?.userId ?? payload?.id ?? "unknown"),
+      email: payload?.email,
+      username: payload?.username,
+      fullName: payload?.fullName ?? payload?.name,
+      role: payload?.role ?? payload?.roles,
+    });
+
+    await fetchProfile();
+    setLoading(false);
+  }, [fetchProfile]);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.dispatchEvent(new Event("auth-changed"));
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
-        } else {
-          setProfile(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    checkAuth();
+    const handler = () => checkAuth();
+    window.addEventListener("storage", handler);
+    window.addEventListener("auth-changed", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("auth-changed", handler);
+    };
+  }, [checkAuth]);
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, refreshProfile: fetchProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

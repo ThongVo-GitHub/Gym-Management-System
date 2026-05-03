@@ -3,7 +3,7 @@ import {
   LayoutDashboard, CreditCard, CalendarPlus, ScanLine, Calendar, User, LogOut, Dumbbell, X,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const navItems = [
@@ -23,9 +23,10 @@ const AppSidebar = ({ onClose }: AppSidebarProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    logout();
     toast.success("Đã đăng xuất");
     navigate("/");
   };

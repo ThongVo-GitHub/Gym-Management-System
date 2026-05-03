@@ -11,7 +11,7 @@ import {
 import { Search, Clock, User, Calendar, AlertCircle, Dumbbell, Flame, Target, Zap, HeartPulse, TrendingUp, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCountUp } from "@/hooks/useCountUp";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -44,6 +44,17 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
   );
 };
 
+interface ClassRow {
+  id: number;
+  name: string;
+  trainer: string;
+  schedule: string;
+  time: string;
+  slots: number;
+  icon_name?: string;
+  accent?: string;
+}
+
 const Booking = () => {
   const [search, setSearch] = useState("");
   const [trainerFilter, setTrainerFilter] = useState("all");
@@ -51,11 +62,10 @@ const Booking = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: classes = [] } = useQuery({
+  const { data: classes = [] } = useQuery<ClassRow[]>({
     queryKey: ["classes"],
     queryFn: async () => {
-      const { data } = await supabase.from("classes").select("*").order("id");
-      return data || [];
+      try { return await api.get<ClassRow[]>("/classes"); } catch { return []; }
     },
   });
 
@@ -68,7 +78,7 @@ const Booking = () => {
     return matchSearch && matchTrainer;
   });
 
-  const handleBook = async (cls: typeof classes[0]) => {
+  const handleBook = async (cls: ClassRow) => {
     if (cls.slots === 0) {
       toast.error("Lớp đã đầy! Vui lòng chọn lớp khác.");
       return;
@@ -83,22 +93,24 @@ const Booking = () => {
       const scheduledDate = today.toISOString().split("T")[0];
       const [startTime, endTime] = cls.time.split(" - ");
 
-      const { error } = await supabase.from("user_schedules").insert({
-        user_id: user.id,
+      await api.post("/schedules", {
         name: cls.name,
         scheduled_date: scheduledDate,
+        scheduledDate,
         start_time: startTime.trim(),
+        startTime: startTime.trim(),
         end_time: endTime.trim(),
+        endTime: endTime.trim(),
         trainer: cls.trainer,
         status: "Sắp tới",
         icon_name: cls.icon_name || "Dumbbell",
+        iconName: cls.icon_name || "Dumbbell",
         accent: cls.accent || "38, 92%, 50%",
         class_id: cls.id,
+        classId: cls.id,
       });
-      if (error) throw error;
 
-      // Decrement slot
-      await supabase.rpc("decrement_class_slot", { p_class_id: cls.id });
+      try { await api.post(`/classes/${cls.id}/decrement-slot`); } catch (e) { console.warn(e); }
       queryClient.invalidateQueries({ queryKey: ["classes"] });
       toast.success(`Đăng ký lớp thành công: ${cls.name}! Xem tại Lịch của tôi.`);
     } catch (err: any) {

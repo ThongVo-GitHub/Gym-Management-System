@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useCountUp } from "@/hooks/useCountUp";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
@@ -24,31 +24,29 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
   );
 };
 
+interface CheckinRow { id: string | number; branch: string; checked_in_at: string; }
+
 const Checkin = () => {
   const { profile, user } = useAuth();
   const [showQR, setShowQR] = useState(false);
   const [qrTimestamp, setQrTimestamp] = useState<string>("");
   const [showCheckinResult, setShowCheckinResult] = useState(false);
 
-  const { data: checkins = [], refetch: refetchCheckins } = useQuery({
+  const { data: checkins = [], refetch: refetchCheckins } = useQuery<CheckinRow[]>({
     queryKey: ["checkins", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("checkins").select("*").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(10);
-      return data || [];
+      try { return await api.get<CheckinRow[]>("/checkins?limit=10"); } catch { return []; }
     },
     enabled: !!user,
   });
 
-  const { data: totalCheckins = 0 } = useQuery({
-    queryKey: ["total-checkins", user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("checkins").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      return count ?? 0;
-    },
-    enabled: !!user,
-  });
+  // const { data: totalCheckins = 0 } = useQuery<number>({
+  //   queryKey: ["total-checkins", user?.id],
+  //   queryFn: async () => {
+  //     try { return await api.get<number>("/checkins/count"); } catch { return 0; }
+  //   },
+  //   enabled: !!user,
+  // });
 
   const streakDays = useMemo(() => {
     if (checkins.length === 0) return 0;
@@ -90,12 +88,14 @@ const Checkin = () => {
     setShowQR(true);
     setShowCheckinResult(false);
 
-    await supabase.from("checkins").insert({
-      user_id: user.id,
-      branch: profile?.branch || "Chi nhánh Quận 1",
-    });
-    refetchCheckins();
-    toast.success(`Check-in thành công lúc ${new Date().toLocaleTimeString("vi-VN")}!`);
+    try {
+      await api.post("/checkins", { branch: profile?.branch || "Chi nhánh Quận 1" });
+      refetchCheckins();
+      toast.success(`Check-in thành công lúc ${new Date().toLocaleTimeString("vi-VN")}!`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Check-in thất bại");
+    }
   };
 
   const handleSimulateScan = () => {
@@ -187,7 +187,7 @@ const Checkin = () => {
                 <h3 className="font-bold text-lg flex items-center justify-center gap-2">
                   <BadgeCheck className="w-5 h-5" style={{ color: "hsl(200, 70%, 55%)" }} /> Check-in thành công
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">Chào mừng đến TwelveFit, {profile?.full_name.split(" ").pop()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Chào mừng đến TwelveFit, {profile?.full_name?.split(" ").pop()}</p>
               </div>
               <div className="rounded-xl p-4 space-y-2.5 text-left mx-auto max-w-[300px]" style={{ background: "hsla(210, 25%, 12%, 0.7)", border: "1px solid hsla(200, 40%, 25%, 0.3)" }}>
                 <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Họ tên</span><span className="font-semibold">{memberData.memberName}</span></div>
@@ -226,7 +226,7 @@ const Checkin = () => {
             <div className="space-y-3">
               {checkins.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Chưa có lịch sử check-in</p>
-              ) : checkins.slice(0, 5).map((h, i) => {
+              ) : checkins.slice(0, 5).map((h) => {
                 const date = new Date(h.checked_in_at);
                 return (
                   <div key={h.id} className="flex items-center gap-3 p-3 rounded-xl activity-row cursor-default" style={{ background: "hsla(200, 18%, 12%, 0.35)" }}>

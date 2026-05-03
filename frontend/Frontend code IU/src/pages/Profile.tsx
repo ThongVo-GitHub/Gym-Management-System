@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
-import { User, Mail, Phone, MapPin, CreditCard, Edit3, Shield, IdCard, Trophy, Dumbbell, TrendingUp, Save, X, Camera } from "lucide-react";
+import { Mail, Phone, MapPin, CreditCard, Edit3, Shield, IdCard, Trophy, Dumbbell, TrendingUp, Save, X, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCountUp } from "@/hooks/useCountUp";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
@@ -40,20 +40,18 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: checkinCount = 0 } = useQuery({
+  const { data: checkinCount = 0 } = useQuery<number>({
     queryKey: ["checkin-count", user?.id],
     queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("checkins").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      return count ?? 0;
+      try { return await api.get<number>("/checkins/count"); } catch { return 0; }
     },
     enabled: !!user,
   });
 
-  const { data: monthsActive = 0 } = useQuery({
+  const { data: monthsActive = 0 } = useQuery<number>({
     queryKey: ["months-active", profile?.created_at],
     queryFn: () => {
-      if (!profile) return 0;
+      if (!profile?.created_at) return 0;
       const created = new Date(profile.created_at);
       const now = new Date();
       return Math.max(1, Math.ceil((now.getTime() - created.getTime()) / (30 * 24 * 60 * 60 * 1000)));
@@ -70,15 +68,25 @@ const Profile = () => {
     if (!file.type.startsWith("image/")) { toast.error("Vui lòng chọn file ảnh"); return; }
 
     setUploading(true);
-    const filePath = `${user.id}/avatar.${file.name.split('.').pop()}`;
-    const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
-    if (uploadError) { toast.error("Lỗi upload ảnh"); setUploading(false); return; }
-
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", user.id);
-    await refreshProfile();
-    toast.success("Cập nhật ảnh đại diện thành công!");
-    setUploading(false);
+    try {
+      // Upload sang Java backend bằng multipart/form-data
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8081/api/users/me/avatar", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload thất bại");
+      await refreshProfile();
+      toast.success("Cập nhật ảnh đại diện thành công!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi upload ảnh");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleEdit = () => {
@@ -93,16 +101,20 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!user) return;
-    const { error } = await supabase.from("profiles").update({
-      full_name: editData.full_name,
-      phone: editData.phone,
-      address: editData.address,
-    }).eq("user_id", user.id);
-
-    if (error) { toast.error("Lỗi cập nhật thông tin"); return; }
-    await refreshProfile();
-    setEditing(false);
-    toast.success("Cập nhật thông tin thành công!");
+    try {
+      await api.put("/users/me", {
+        fullName: editData.full_name,
+        full_name: editData.full_name,
+        phone: editData.phone,
+        address: editData.address,
+      });
+      await refreshProfile();
+      setEditing(false);
+      toast.success("Cập nhật thông tin thành công!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi cập nhật thông tin");
+    }
   };
 
   const handleCancel = () => setEditing(false);

@@ -1,0 +1,13 @@
+{
+  "name": "member-e2e-cypress",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "open": "cypress open",
+    "test": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.15.0",
+    "typescript": "^5.8.3"
+  }
+}

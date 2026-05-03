@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarPlus, CreditCard, QrCode, MapPin, Dumbbell, Trophy, Quote, ChevronRight, Heart, Flame, TrendingUp,
 } from "lucide-react";
 import { useCountUp } from "@/hooks/useCountUp";
-import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
@@ -26,49 +25,44 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
   );
 };
 
+interface CheckinRow { id: string | number; branch: string; checked_in_at: string; }
+interface ScheduleRow { id: string; name: string; trainer: string; scheduled_date: string; start_time?: string; }
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
 
-  const { data: checkins = [] } = useQuery({
+  const { data: checkins = [] } = useQuery<CheckinRow[]>({
     queryKey: ["recent-checkins", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("checkins").select("*").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(3);
-      return data || [];
+      try { return await api.get<CheckinRow[]>("/checkins?limit=3"); } catch { return []; }
     },
     enabled: !!user,
   });
 
-  const { data: schedules = [] } = useQuery({
+  const { data: schedules = [] } = useQuery<ScheduleRow[]>({
     queryKey: ["recent-schedules", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("user_schedules").select("*").eq("user_id", user.id).order("scheduled_date", { ascending: true }).limit(2);
-      return data || [];
+      try { return await api.get<ScheduleRow[]>("/schedules?limit=2"); } catch { return []; }
     },
     enabled: !!user,
   });
 
-  const { data: totalCheckins = 0 } = useQuery({
+  const { data: totalCheckins = 0 } = useQuery<number>({
     queryKey: ["dashboard-total-checkins", user?.id],
     queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("checkins").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      return count ?? 0;
+      try { return await api.get<number>("/checkins/count"); } catch { return 0; }
     },
     enabled: !!user,
   });
 
-  const { data: scheduleCount = 0 } = useQuery({
-    queryKey: ["dashboard-schedule-count", user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("user_schedules").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      return count ?? 0;
-    },
-    enabled: !!user,
-  });
+  // const { data: scheduleCount = 0 } = useQuery<number>({
+  //   queryKey: ["dashboard-schedule-count", user?.id],
+  //   queryFn: async () => {
+  //     try { return await api.get<number>("/schedules/count"); } catch { return 0; }
+  //   },
+  //   enabled: !!user,
+  // });
 
   const recentActivities = useMemo(() => {
     const activities: { icon: typeof Dumbbell; iconClass: string; title: string; subtitle: string }[] = [];
@@ -98,7 +92,7 @@ const Dashboard = () => {
     { icon: QrCode, title: "Mã Check-in (QR)", desc: "Dùng để vào phòng tập", gradient: false, path: "/checkin" },
   ];
 
-  const memberName = profile?.full_name || "Hội viên";
+  const memberName = profile?.full_name || user?.fullName || user?.email || "Hội viên";
   const memberPackage = profile?.package || "Twelve Lite";
   const memberId = profile?.member_id || "";
   const memberExpiry = profile?.package_expiry ? new Date(profile.package_expiry).toLocaleDateString("vi-VN") : "";

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Dumbbell, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -27,25 +26,22 @@ const Login = () => {
         setLoading(false);
         return;
       }
-      // --- ĐOẠN CODE GỌI BACKEND SPRING BOOT ---
       try {
-        const response = await fetch('http://localhost:8081/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const response = await fetch("http://localhost:8081/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: fullName, // Khớp với dòng 11 (Dùng tên làm username)
-            email: email,       // Khớp với dòng 15
-            password: password, // Khớp với dòng 19
-            fullName: fullName,  // Kiểu camelCase cho Java
-            full_name: fullName, // Kiểu snake_case cho Database
-            name: fullName       // Kiểu phổ thông
+            username: fullName,
+            email,
+            password,
+            fullName,
+            full_name: fullName,
+            name: fullName,
           }),
         });
 
         if (response.ok) {
-          toast.success("Đăng ký thành công! Vui lòng kiểm tra mail để xác nhận tài khoản!!.");
+          toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
           setIsSignUp(false);
         } else {
           toast.error("Đăng ký thất bại. Email hoặc Tên đã tồn tại!");
@@ -56,15 +52,41 @@ const Login = () => {
       } finally {
         setLoading(false);
       }
-      return; // Dừng lại ở đây, không chạy tiếp xuống phần Đăng nhập
-      // ------------------------------------------------------
+      return;
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast.error("Email hoặc mật khẩu không đúng");
-      } else {
-        toast.success("Đăng nhập thành công!");
-        navigate("/dashboard");
+      try {
+        const response = await fetch("http://localhost:8081/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            usernameOrEmail: email,
+            email,
+            password,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          toast.error(errorData.message || "Email hoặc mật khẩu không đúng");
+        } else {
+          const data = await response.json();
+          console.log("Login response:", data);
+
+          const token = data.token || data.accessToken || data.jwt || data.access_token;
+          if (!token) {
+            toast.error("Backend không trả về token. Check console log.");
+            setLoading(false);
+            return;
+          }
+
+          localStorage.setItem("token", token);
+          window.dispatchEvent(new Event("auth-changed"));
+          toast.success("Đăng nhập thành công!");
+          navigate("/dashboard", { replace: true });
+        }
+      } catch (error) {
+        toast.error("Lỗi kết nối đến Server Java!");
+        console.error("Lỗi đăng nhập:", error);
       }
     }
     setLoading(false);

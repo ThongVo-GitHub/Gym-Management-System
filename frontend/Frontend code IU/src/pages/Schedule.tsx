@@ -1,7 +1,7 @@
 import { Calendar, Clock, User, Dumbbell, Target, HeartPulse, Flame, CheckCircle, Timer, CalendarDays, TrendingUp, Trash2, Loader2 } from "lucide-react";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -41,18 +41,29 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
   );
 };
 
+interface ScheduleRow {
+  id: string;
+  name: string;
+  trainer: string;
+  scheduled_date: string;
+  start_time?: string;
+  end_time?: string;
+  status: string;
+  icon_name?: string;
+  accent?: string;
+  class_id: number | null;
+}
+
 const Schedule = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ id: string; name: string; class_id: number | null } | null>(null);
 
-  const { data: schedules = [] } = useQuery({
+  const { data: schedules = [] } = useQuery<ScheduleRow[]>({
     queryKey: ["user-schedules", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase.from("user_schedules").select("*").eq("user_id", user.id).order("scheduled_date", { ascending: true });
-      return data || [];
+      try { return await api.get<ScheduleRow[]>("/schedules"); } catch { return []; }
     },
     enabled: !!user,
   });
@@ -84,12 +95,10 @@ const Schedule = () => {
     setDeleting(id);
     setCancelTarget(null);
     try {
-      const { error } = await supabase.from("user_schedules").delete().eq("id", id).eq("user_id", user!.id);
-      if (error) throw error;
+      await api.del(`/schedules/${id}`);
 
-      // Increment slot back
       if (class_id) {
-        await supabase.rpc("increment_class_slot", { p_class_id: class_id });
+        try { await api.post(`/classes/${class_id}/increment-slot`); } catch (e) { console.warn(e); }
         queryClient.invalidateQueries({ queryKey: ["classes"] });
       }
 

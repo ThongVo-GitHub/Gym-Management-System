@@ -1,57 +1,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Clock, ArrowRight, Dumbbell, Crown, GraduationCap, Gem, Award, Sparkles, Users, Zap, CreditCard, Loader2 } from "lucide-react";
+import { Search, Clock, ArrowRight, Dumbbell, Crown, GraduationCap, Award, Sparkles, Users, Zap, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCountUp } from "@/hooks/useCountUp";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
 const packages = [
-  {
-    id: 1,
-    name: "TWELVE LITE",
-    duration: "1 tháng",
-    price: "500.000",
+  { id: 1, name: "TWELVE LITE", duration: "1 tháng", price: "500.000",
     description: "Gói cơ bản dành cho người mới bắt đầu. Tự do tập gym không giới hạn thời gian trong ngày, sử dụng toàn bộ thiết bị tại phòng tập.",
-    popular: false,
-    label: "",
-    icon: Dumbbell,
-    accent: "200, 70%, 50%",
-  },
-  {
-    id: 2,
-    name: "TWELVE STUDENT",
-    duration: "3 tháng",
-    price: "1.200.000",
+    popular: false, label: "", icon: Dumbbell, accent: "200, 70%, 50%" },
+  { id: 2, name: "TWELVE STUDENT", duration: "3 tháng", price: "1.200.000",
     description: "Ưu đãi dành cho học sinh, sinh viên. Tập gym không giới hạn, được hướng dẫn lịch tập cơ bản và tham gia 4 buổi group training miễn phí.",
-    popular: false,
-    label: "ƯU ĐÃI",
-    icon: GraduationCap,
-    accent: "152, 60%, 48%",
-  },
-  {
-    id: 3,
-    name: "TWELVE ELITE",
-    duration: "6 tháng",
-    price: "2.400.000",
+    popular: false, label: "ƯU ĐÃI", icon: GraduationCap, accent: "152, 60%, 48%" },
+  { id: 3, name: "TWELVE ELITE", duration: "6 tháng", price: "2.400.000",
     description: "Gói phổ biến nhất. Tập gym không giới hạn, 12 buổi group training, 3 buổi PT cá nhân, tư vấn dinh dưỡng cơ bản và ưu tiên đặt lịch.",
-    popular: true,
-    label: "PHỔ BIẾN",
-    icon: Award,
-    accent: "359, 65%, 50%",
-  },
-  {
-    id: 4,
-    name: "TWELVE PLATINUM",
-    duration: "12 tháng",
-    price: "4.200.000",
+    popular: true, label: "PHỔ BIẾN", icon: Award, accent: "359, 65%, 50%" },
+  { id: 4, name: "TWELVE PLATINUM", duration: "12 tháng", price: "4.200.000",
     description: "Gói cao cấp nhất. Full quyền lợi, PT riêng hàng tuần, group training không giới hạn, tư vấn dinh dưỡng chuyên sâu, locker riêng và khăn tập miễn phí.",
-    popular: false,
-    label: "",
-    icon: Crown,
-    accent: "38, 92%, 50%",
-  },
+    popular: false, label: "", icon: Crown, accent: "38, 92%, 50%" },
 ];
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
@@ -69,9 +37,7 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
       </div>
       <p className="text-3xl font-extrabold tracking-tight">
         <span style={{
-          background: color
-            ? `linear-gradient(135deg, hsl(${color}), hsl(359, 65%, 50%))`
-            : undefined,
+          background: color ? `linear-gradient(135deg, hsl(${color}), hsl(359, 65%, 50%))` : undefined,
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}>{count}</span>
@@ -100,16 +66,14 @@ const Packages = () => {
       const expiry = new Date();
       const months = pkg.id === 1 ? 1 : pkg.id === 2 ? 3 : pkg.id === 3 ? 6 : 12;
       expiry.setMonth(expiry.getMonth() + months);
+      const expiryStr = expiry.toISOString().split("T")[0];
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          package: pkg.name,
-          package_expiry: expiry.toISOString().split("T")[0],
-        })
-        .eq("user_id", user.id);
+      await api.put("/users/me", {
+        package: pkg.name,
+        package_expiry: expiryStr,
+        packageExpiry: expiryStr,
+      });
 
-      if (error) throw error;
       await refreshProfile();
       toast.success(`Đăng ký thành công gói ${pkg.name}!`);
     } catch (err: any) {
