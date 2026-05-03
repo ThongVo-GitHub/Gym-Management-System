@@ -1,6 +1,5 @@
 package com.fitness.gymManagementSystem.exception;
 
-
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // Xử lý lỗi Validate DTO (@Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<ApiError.FieldErrorDetail> details = ex.getBindingResult().getFieldErrors().stream()
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
 
         ApiError body = new ApiError(
             "Bad Request",
-            "Validation failed",
+            "Dữ liệu đầu vào không hợp lệ",
             details,
             request.getRequestURI(),
             Instant.now()
@@ -44,11 +44,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    // Lỗi không tìm thấy tài nguyên (404)
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        
         ApiError body = new ApiError(
-            "NotFound",
+            "Not Found",
             ex.getMessage(),
             null,
             request.getRequestURI(),
@@ -57,9 +57,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
+    // Lỗi trùng lặp dữ liệu (409)
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiError> handleConflict(DuplicateResourceException ex, HttpServletRequest request) {
-        
         ApiError body = new ApiError(
             "Conflict",
             ex.getMessage(),
@@ -70,9 +70,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    // 🔥 BỔ SUNG: Xử lý lỗi nghiệp vụ (Business Logic) như "Lớp đã đầy", "Trùng lịch" -> Trả về 400
+    @ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
+    public ResponseEntity<ApiError> handleBusinessLogicException(RuntimeException ex, HttpServletRequest request) {
+        ApiError body = new ApiError(
+            "Bad Request",
+            ex.getMessage(),
+            null,
+            request.getRequestURI(),
+            Instant.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    // Lỗi sai mật khẩu / username (401)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
-        
         ApiError body = new ApiError(
             "Unauthorized",
             "Username/Email hoặc mật khẩu không đúng",
@@ -83,12 +96,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
+    // Lỗi Token hết hạn hoặc không hợp lệ (401)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
-        
         ApiError body = new ApiError(
             "Unauthorized",
-            ex.getMessage(),
+            "Vui lòng đăng nhập lại", // Có thể dùng ex.getMessage() tùy độ nhạy cảm
             null,
             request.getRequestURI(),
             Instant.now()
@@ -96,9 +109,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
+    // Lỗi không đủ quyền hạn (403)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        
         ApiError body = new ApiError(
             "Forbidden",
             "Bạn không có quyền truy cập tài nguyên này",
@@ -110,11 +123,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAccessDenied(Exception ex, HttpServletRequest request) {
-        log.error("Unhandler error: ", ex);
+    public ResponseEntity<ApiError> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled error: ", ex);
         ApiError body = new ApiError(
             "Internal Server Error",
-            "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+            "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
             null,
             request.getRequestURI(),
             Instant.now()
@@ -122,10 +135,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
-    private ApiError.FieldErrorDetail toFieldError (FieldError fe) {
+    // Mapper cho FieldError
+    private ApiError.FieldErrorDetail toFieldError(FieldError fe) {
         return new ApiError.FieldErrorDetail(
             fe.getField(),
-            fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid"
+            fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value"
         );
     }
 }

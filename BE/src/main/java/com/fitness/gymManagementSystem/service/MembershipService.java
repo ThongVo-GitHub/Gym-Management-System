@@ -30,7 +30,7 @@ public class MembershipService {
         this.userRepository = userRepository;
     }
 
-    // ================= BUY =================
+    // ================= BUY (CHỈ TẠO ĐƠN CHỜ) =================
     @Transactional
     public InvoiceResponse buyMembership(BuyMembershipRequest request, String username) {
 
@@ -40,33 +40,24 @@ public class MembershipService {
         GymPackage gymPackage = packageRepository.findById(request.packageId())
                 .orElseThrow(() -> new ResourceNotFoundException("Package", request.packageId()));
 
-        // 🔥 RENEW LOGIC
-        LocalDate startDate;
-
-        Optional<Invoice> latest = invoiceRepository
-                .findTopByUserAndStatusOrderByExpiredDateDesc(user, InvoiceStatus.PAID);
-
-        if (latest.isPresent() && latest.get().getExpiredDate().isAfter(LocalDate.now())) {
-            startDate = latest.get().getExpiredDate();
-        } else {
-            startDate = LocalDate.now();
-        }
-
-        LocalDate expiredDate = startDate.plusMonths(gymPackage.getDurationMonths());
-
         Invoice invoice = new Invoice();
         invoice.setUser(user);
         invoice.setGymPackage(gymPackage);
-    invoice.setPaymentMethod(
-        PaymentMethod.valueOf(request.paymentMethod().toUpperCase())
-    );        invoice.setPaymentDate(LocalDate.now());
-        invoice.setExpiredDate(expiredDate);
+        
+        // Xử lý an toàn lỗi sai format Enum
+        try {
+            invoice.setPaymentMethod(PaymentMethod.valueOf(request.paymentMethod().toUpperCase()));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ");
+        }
+
         invoice.setStatus(InvoiceStatus.PENDING);
+        // Lưu ý: Không set paymentDate và expiredDate ở đây vì tiền chưa vào tài khoản.
 
         return toResponse(invoiceRepository.save(invoice));
     }
 
-    // ================= CONFIRM =================
+    // ================= CONFIRM (TÍNH NGÀY TẠI ĐÂY) =================
     @Transactional
     public InvoiceResponse confirmPayment(Long invoiceId) {
 
@@ -74,32 +65,57 @@ public class MembershipService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", invoiceId));
 
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new DuplicateResourceException("Invoice đã được thanh toán");
+            throw new DuplicateResourceException("Invoice đã được thanh toán trước đó");
         }
 
+        // 🔥 RENEW LOGIC: Chỉ tính ngày khi Admin xác nhận đã nhận tiền
+        LocalDate startDate;
+        Optional<Invoice> latest = invoiceRepository
+                .findTopByUserAndStatusOrderByExpiredDateDesc(invoice.getUser(), InvoiceStatus.PAID);
+
+        // Nếu user đang có 1 gói Active -> Cộng dồn ngày
+        if (latest.isPresent() && latest.get().getExpiredDate() != null && latest.get().getExpiredDate().isAfter(LocalDate.now())) {
+            startDate = latest.get().getExpiredDate();
+        } else {
+            // Nếu user mới hoặc gói cũ đã hết hạn -> Bắt đầu tính từ ngày hôm nay (ngày confirm)
+            startDate = LocalDate.now();
+        }
+
+        LocalDate expiredDate = startDate.plusMonths(invoice.getGymPackage().getDurationMonths());
+
+        invoice.setPaymentDate(LocalDate.now());
+        invoice.setExpiredDate(expiredDate);
         invoice.setStatus(InvoiceStatus.PAID);
 
         return toResponse(invoiceRepository.save(invoice));
     }
 
     // ================= GET ACTIVE =================
+    @Transactional(readOnly = true)
     public InvoiceResponse getMyMembership(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", username));
 
         Invoice invoice = invoiceRepository
                 .findTopByUserAndStatusOrderByExpiredDateDesc(user, InvoiceStatus.PAID)
-                .filter(i -> i.getExpiredDate().isAfter(LocalDate.now()))
-                .orElseThrow(() -> new ResourceNotFoundException("Không có gói active"));
+                .filter(i -> i.getExpiredDate() != null && i.getExpiredDate().isAfter(LocalDate.now()))
+                .orElseThrow(() -> new ResourceNotFoundException("Không có gói membership nào đang active"));
 
         return toResponse(invoice);
     }
 
-    // ================= CHECK ACTIVE =================
+    // ================= CHECK ACTIVE (GỘP LOGIC) =================
+    @Transactional(readOnly = true)
     public boolean isUserActive(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", username));
 
+        // 1. Kiểm tra tài khoản có bị khóa không
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            return false;
+        }
+
+        // 2. Kiểm tra dựa trên lịch sử Invoice (Nguồn chân lý chuẩn xác nhất)
         return invoiceRepository.existsByUserAndStatusAndExpiredDateAfter(
                 user,
                 InvoiceStatus.PAID,
@@ -107,7 +123,7 @@ public class MembershipService {
         );
     }
 
-// ================= MAPPER =================
+    // ================= MAPPER =================
     public InvoiceResponse toResponse(Invoice i) {
         return new InvoiceResponse(
                 i.getId(),
@@ -115,13 +131,13 @@ public class MembershipService {
                 i.getUser().getUsername(),
                 i.getGymPackage().getId(),
                 i.getGymPackage().getPackageName(),
-                i.getGymPackage().getPrice(), 
-                i.getPaymentMethod(),
+                i.getGymPackage().getPrice(),
+                i.getPaymentMethod(),   
                 i.getPaymentDate(),
                 i.getExpiredDate(),
                 i.getStatus(),
                 i.getTxnRef(),
-                i.getCreatedAt() 
+                i.getCreatedAt()
         );
     }
 }

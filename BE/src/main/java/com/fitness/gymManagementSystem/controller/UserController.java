@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fitness.gymManagementSystem.dto.UpdateUserRequest;
 import com.fitness.gymManagementSystem.dto.UserResponse;
+import com.fitness.gymManagementSystem.entity.Role;
 import com.fitness.gymManagementSystem.service.UserService;
 
 import java.util.List;
@@ -23,63 +24,97 @@ public class UserController {
         this.userService = userService;
     }
 
+    // =========================
+    // GET CURRENT USER (/me)
+    // =========================
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
+        String username = authentication.getName();
+        return ResponseEntity.ok(userService.getByUsername(username));
+    }
+
+    // =========================
+    // UPDATE CURRENT USER (/me)
+    // =========================
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> updateMe(
+            @Valid @RequestBody UpdateUserRequest request,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        // Lấy thông tin user hiện tại để lấy ID
+        UserResponse currentUser = userService.getByUsername(username);
+
+        // Cập nhật dựa trên ID của chính họ
+        return ResponseEntity.ok(
+                userService.update(currentUser.id(), request, username)
+        );
+    }
+
+    // =========================
+    // ADMIN: LIST USERS
+    // =========================
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserResponse>> list(
+    public ResponseEntity<Page<UserResponse>> listUsers(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Role role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "username") String sort,
             @RequestParam(defaultValue = "asc") String order) {
 
-        List<String> allowedSortFields = List.of("username", "email");
+        // Whitelist sort fields (security + stability)
+        List<String> allowedSortFields = List.of("username", "email", "createdAt");
 
         if (!allowedSortFields.contains(sort)) {
             sort = "username";
         }
 
         Sort.Direction direction = "desc".equalsIgnoreCase(order)
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
 
-        Pageable pageable = PageRequest.of(page, Math.min(size, 100), Sort.by(direction, sort));
+        Pageable pageable = PageRequest.of(
+                page,
+                Math.min(size, 100), // Giới hạn size tối đa để tránh quá tải
+                Sort.by(direction, sort)
+        );
 
-        return ResponseEntity.ok(userService.findAll(search, null, pageable));
+        return ResponseEntity.ok(
+                userService.findAll(search, role, pageable)
+        );
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> update(
+    // =========================
+    // UPDATE USER BY ID (ADMIN ONLY)
+    // =========================
+    @PutMapping("/{id:\\d+}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateById(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request,
             Authentication authentication) {
-
-        if (authentication == null || authentication.getName() == null) {
-            throw new RuntimeException("Unauthorized");
-        }
+        
+        // Chỉ ADMIN mới có quyền gọi API update thông qua ID của người khác
+        String adminUsername = authentication.getName();
 
         return ResponseEntity.ok(
-                userService.update(id, request, authentication.getName())
+                userService.update(id, request, adminUsername)
         );
     }
 
-    @DeleteMapping("/{id}")
+    // =========================
+    // DELETE USER (ADMIN ONLY)
+    // =========================
+    @DeleteMapping("/{id:\\d+}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-
-        if (authentication == null || authentication.getName() == null) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        return ResponseEntity.ok(
-                userService.getByUsername(authentication.getName())
-        );
-    }
+    
+    // =========================
 }

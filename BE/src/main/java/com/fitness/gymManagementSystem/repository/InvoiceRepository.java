@@ -13,22 +13,24 @@ import com.fitness.gymManagementSystem.entity.User;
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     // ================= BASIC =================
-    Page<Invoice> findByUser_Id(Long userId, Pageable pageable);
+Page<Invoice> findByUser_Id(Long userId, Pageable pageable);
 
-    Page<Invoice> findByStatus(InvoiceStatus status, Pageable pageable);
+Page<Invoice> findByStatus(InvoiceStatus status, Pageable pageable);
 
-    Page<Invoice> findByUser_IdAndStatus(Long userId, InvoiceStatus status, Pageable pageable);
+Page<Invoice> findByUser_IdAndStatus(Long userId, InvoiceStatus status, Pageable pageable);
+
+boolean existsByGymPackageId(Long packageId);
 
     // ================= CORE (QUAN TRỌNG NHẤT) =================
-    Optional<Invoice> findTopByUserAndStatusOrderByExpiredDateDesc(
-            User user,
-            InvoiceStatus status
-    );
+Optional<Invoice> findTopByUserAndStatusOrderByExpiredDateDesc(
+        User user,
+        InvoiceStatus status
+);
 
     // ================= CHECK ACTIVE =================
-    boolean existsByUserAndStatusAndExpiredDateAfter(
-            User user,
-            InvoiceStatus status,
-            java.time.LocalDate date
-    );
+boolean existsByUserAndStatusAndExpiredDateAfter(
+        User user,
+        InvoiceStatus status,
+        java.time.LocalDate date
+);
 }

@@ -3,9 +3,6 @@ package com.fitness.gymManagementSystem.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.fitness.gymManagementSystem.service.AuthService;
@@ -24,22 +21,23 @@ public class AuthController {
         this.authService = authService;
     }
 
+    /**
+     * Đăng ký tài khoản mới.
+     * Lưu ý: Hãy đảm bảo endpoint đăng ký trong UserController đã được xóa bỏ để tránh trùng lặp.
+     */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
-        UserResponse created = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        UserResponse createdUser = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
 
+    /**
+     * Đăng nhập và trả về Token (Access + Refresh nếu có).
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
-        UserResponse user = authService.getCurrentUser(userDetails.getUsername());
-        return ResponseEntity.ok(user);
-    }
 }

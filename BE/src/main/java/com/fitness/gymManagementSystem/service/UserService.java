@@ -73,7 +73,6 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(newUser));
     }
 
-    // Nhận UpdateUserRequest DTO thay vì raw User entity
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request, String currentUsername) {
 

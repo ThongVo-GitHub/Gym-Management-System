@@ -2,6 +2,7 @@ package com.fitness.gymManagementSystem.security;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
@@ -30,29 +31,36 @@ public class JwtService {
     public String generateAccessToken(UserDetails userDetails) {
         return buildToken(
             userDetails.getUsername(),
-            jwtProperties.getAccessTokenExpirationMs()
+            jwtProperties.getAccessTokenExpirationMs(),
+            "access" // Đánh dấu là Access Token
         );
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(
             userDetails.getUsername(),
-            jwtProperties.getRefreshTokenExpirationMs()
+            jwtProperties.getRefreshTokenExpirationMs(),
+            "refresh" // Đánh dấu là Refresh Token
         );
     }
 
-    private String buildToken(String subject, long expirationMs) {
+    private String buildToken(String subject, long expirationMs, String tokenType) {
         return Jwts.builder()
-        .subject(subject)
-        .issuer("gym-api")
-        .issuedAt(new Date(System.currentTimeMillis()))
-        .expiration(new Date(System.currentTimeMillis() + expirationMs))
-        .signWith(getSigningKey())
-        .compact();
+            .claims(Map.of("type", tokenType)) // Thêm custom claim để nhận diện
+            .subject(subject)
+            .issuer("gym-api")
+            .issuedAt(new Date(System.currentTimeMillis()))
+            .expiration(new Date(System.currentTimeMillis() + expirationMs))
+            .signWith(getSigningKey())
+            .compact();
     }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractTokenType(String token) {
+        return extractClaim(token, claims -> claims.get("type", String.class));
     }
 
     public Date extractExpiration(String token) {
@@ -66,18 +74,33 @@ public class JwtService {
 
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-        .verifyWith(getSigningKey())
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
-    public boolean isTokenExpired(String token){
+    public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         String username = extractUsername(token);
-        return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        String type = extractTokenType(token);
+        
+        return username != null 
+            && username.equals(userDetails.getUsername()) 
+            && "access".equals(type) // Bắt buộc phải là access token
+            && !isTokenExpired(token);
+    }
+    
+    public boolean validateRefreshToken(String token, UserDetails userDetails) {
+        String username = extractUsername(token);
+        String type = extractTokenType(token);
+        
+        return username != null 
+            && username.equals(userDetails.getUsername()) 
+            && "refresh".equals(type) 
+            && !isTokenExpired(token);
     }
 }

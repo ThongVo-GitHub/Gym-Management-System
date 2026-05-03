@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fitness.gymManagementSystem.config.JwtProperties;
 import com.fitness.gymManagementSystem.dto.AuthResponse;
@@ -16,6 +17,7 @@ import com.fitness.gymManagementSystem.dto.RegisterRequest;
 import com.fitness.gymManagementSystem.dto.UserResponse;
 import com.fitness.gymManagementSystem.entity.Role;
 import com.fitness.gymManagementSystem.entity.User;
+import com.fitness.gymManagementSystem.entity.UserStatus;
 import com.fitness.gymManagementSystem.exception.DuplicateResourceException;
 import com.fitness.gymManagementSystem.exception.ResourceNotFoundException;
 import com.fitness.gymManagementSystem.repository.UserRepository;
@@ -34,13 +36,13 @@ public class AuthService {
     private final JwtProperties jwtProperties;
 
     public AuthService(
-        UserRepository userRepository,
-        PasswordEncoder passwordEncoder,
-        JwtService jwtService,
-        AuthenticationManager authenticationManager,
-        UserDetailsService userDetailsService,
-        UserMapper userMapper,
-        JwtProperties jwtProperties
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager,
+            UserDetailsService userDetailsService,
+            UserMapper userMapper,
+            JwtProperties jwtProperties
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -51,6 +53,8 @@ public class AuthService {
         this.jwtProperties = jwtProperties;
     }
 
+    // TỐI ƯU: Bắt buộc phải có @Transactional cho thao tác INSERT
+    @Transactional
     public UserResponse register(RegisterRequest request) {
         if(userRepository.existsByUsername(request.username())) {
             throw new DuplicateResourceException("Username đã tồn tại");
@@ -59,39 +63,37 @@ public class AuthService {
             throw new DuplicateResourceException("Email đã tồn tại");
         }
 
+        // TỐI ƯU: Đã bổ sung fullName và status từ code cũ của UserService sang đây
         User user = User.builder()
-        .username(request.username())
-        .email(request.email())
-        .passwordHash(passwordEncoder.encode((request.password())))
-        .role(Role.USER)
-        .build();
+                .username(request.username())
+                .email(request.email())
+                .fullName(request.fullName())
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(Role.USER)
+                .status(UserStatus.ACTIVE)
+                .build();
 
         user = userRepository.save(user);
         log.info("User registered: {}", user.getFullName());
+        
         return userMapper.toResponse(user);
-
     }
 
+    // (Hàm login và getCurrentUser giữ nguyên như cũ vì bạn đã làm rất tốt)
     public AuthResponse login(LoginRequest request) {
-        // 1. Tìm user theo username hoặc Email {"usernameOrEmail": "admin", "password": "admin123"}
         User user = userRepository.findByUsername(request.usernameOrEmail())
                     .or(() ->  userRepository.findByEmail(request.usernameOrEmail()))
                     .orElseThrow(() -> new BadCredentialsException("User/Email hoặc mật khẩu không đúng"));
 
-        // 2. Authenticate bằng AuthenticationManager (Kiểm tra password qua Bcrypt)
-        //    Nếu sai password -> ném lỗi BadCredentialsException -> GlobalExceptionHandler bắt và -> lỗi 401
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), request.password()));
 
-        // 3. Load userDetails để tạo JWT (có authorities: ROLE_USER, ROLE_ADMIN))
         var userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         
-        // 4. Tạo access token + refresh token  
         String accessToken = jwtService.generateAccessToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
         log.info("User logged in: {}", user.getUsername());
 
-        // 5. Trả về AuthResponse
         return AuthResponse.of(
             accessToken,
             refreshToken,
@@ -99,8 +101,6 @@ public class AuthService {
             jwtProperties.getAccessTokenExpirationMs(),
             userMapper.toResponse(user)
         );
-
-
     }
 
     public UserResponse getCurrentUser(String username) {

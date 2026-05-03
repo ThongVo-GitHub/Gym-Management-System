@@ -14,16 +14,17 @@ public record InvoiceResponse(
 
     Long id,
 
-    // USER INFO
+    // ===== USER INFO =====
     Long userId,
     String username,
 
-    // PACKAGE INFO
+    // ===== PACKAGE INFO =====
     Long packageId,
     String packageName,
     BigDecimal price,
 
-    // PAYMENT INFO
+    // ===== PAYMENT INFO =====
+    // Jackson sẽ tự động serialize Enum này thành String (ví dụ: "CASH", "MOMO")
     PaymentMethod paymentMethod,
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -32,14 +33,16 @@ public record InvoiceResponse(
     @JsonFormat(pattern = "yyyy-MM-dd")
     LocalDate expiredDate,
 
-    // STATUS
+    // ===== STATUS =====
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     InvoiceStatus status,
 
-    // OPTIONAL (payment gateway / VNPay / Stripe / etc)
+    // ===== OPTIONAL =====
     String txnRef,
 
-    // AUDIT (VERY IMPORTANT FOR DEBUG)
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    // ===== AUDIT =====
+    // Khai báo rõ timezone để tránh bị lệch giờ khi parse Instant xuống Frontend
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "Asia/Ho_Chi_Minh")
     Instant createdAt
+
 ) {}

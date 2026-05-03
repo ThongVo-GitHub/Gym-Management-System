@@ -39,6 +39,7 @@ public class ClassBooking {
     // ===== GETTERS & SETTERS =====
     public Long getId() { return id; }
     public User getUser() { return user; }
+    public void setId(Long id) { this.id = id; }
     public void setUser(User user) { this.user = user; }
     public GymClass getGymClass() { return gymClass; }
     public void setGymClass(GymClass gymClass) { this.gymClass = gymClass; }
