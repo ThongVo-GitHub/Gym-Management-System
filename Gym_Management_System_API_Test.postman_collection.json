@@ -1,0 +1,2215 @@
+{
+  "info": {
+    "_postman_id": "64ed78fb-e836-4424-88bd-d2365bcbb4b1",
+    "name": "Gym_Management_System_API_Test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53506622",
+    "_collection_link": "https://go.postman.co/collection/53506622-64ed78fb-e836-4424-88bd-d2365bcbb4b1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "1.Auth",
+      "item": [
+        {
+          "name": "TC_AUTH_01 - Đăng nhập Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => { pm.response.to.have.status(200); });\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"user_token\", jsonData.accessToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usernameOrEmail\": \"user01\",\r\n    \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_02 (Đăng nhập Trainer).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", () => { pm.response.to.have.status(200); });\r",
+                  "var jsonData = pm.response.json();\r",
+                  "pm.environment.set(\"trainer_token\", jsonData.accessToken);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usernameOrEmail\": \"trainer01\",\r\n    \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_05 (User không tồn tại)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code chuẩn\", () => { pm.response.to.have.status(401); });\r",
+                  "pm.test(\"Bắt đúng câu báo lỗi\", () => { pm.expect(pm.response.text()).to.include(\"từ khóa lỗi của dev\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usernameOrEmail\": \"khong_tontai\",\r\n    \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Báo lỗi đăng nhập sai mật khẩu (TC_AUTH_02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 401 Unauthorized\", () => { \r",
+                  "    pm.response.to.have.status(401); \r",
+                  "});\r",
+                  "pm.test(\"Kiểm tra câu chửi sai mật khẩu\", () => { \r",
+                  "    pm.expect(pm.response.text()).to.include(\"không đúng\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usernameOrEmail\": \"admin99\",\r\n    \"password\": \"sai_pass\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC06_DangKy_ThanhCong",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", () => { pm.response.to.have.status(201); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Tester Pro\",\r\n    \"username\": \"tester_pro\",\r\n    \"email\": \"tester_pro@gmail.com\",\r\n    \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_05 (Đăng nhập - User không tồn tại)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 401 Unauthorized\", function () {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo sai thông tin\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"không đúng\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usernameOrEmail\": \"khong_ton_tai_dau\",\r\n    \"password\": \"123456\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_10 (Bỏ trống Username)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo không được để trống\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"trống\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Tester Pro\",\r\n    \"username\": \"\",\r\n    \"email\": \"tester_pro@gmail.com\",\r\n    \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_AUTH_11 (Mật khẩu quá ngắn)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo mật khẩu ngắn\", function () {\r",
+                  "    // Có thể Dev dùng chữ \"8 ký tự\" hoặc \"tối thiểu\"\r",
+                  "    pm.expect(pm.response.text()).to.include(\"tối thiểu\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Tester Pro 11\",\r\n    \"username\": \"tester_pro_11\",\r\n    \"email\": \"tester_pro_11@gmail.com\",\r\n    \"password\": \"123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC09_Loi_Sai_Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { \r",
+                  "    pm.response.to.have.status(400); \r",
+                  "});\r",
+                  "pm.test(\"Bắt lỗi định dạng email\", () => { \r",
+                  "    pm.expect(pm.response.text()).to.include(\"hợp lệ\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"tester_moi\",\r\n    \"email\": \"tester_moi_sai_dinh_dang.com\", \r\n    \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC07_Loi_Trung_Username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 409 Conflict\", () => { \r",
+                  "    pm.response.to.have.status(409); \r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo trùng Username\", () => { \r",
+                  "    // Dựa theo file Excel, server sẽ chửi là username đã tồn tại\r",
+                  "    pm.expect(pm.response.text()).to.include(\"tồn tại\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"fullName\": \"Tester Pro\",\r\n    \"username\": \"tester_pro\",\r\n    \"email\": \"tester_pro@gmail.com\",\r\n    \"password\": \"password123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2.Membership",
+      "item": [
+        {
+          "name": "User Mua Gói Tập (TC_MEM_01 & TC_MEM_06)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function () {\r",
+                  "    pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "pm.test(\"Trạng thái phải là PENDING\", function () {\r",
+                  "    pm.expect(pm.response.json().status).to.eql(\"PENDING\");\r",
+                  "});\r",
+                  "\r",
+                  "// Trích xuất ID Hóa đơn lưu vào môi trường\r",
+                  "var jsonData = pm.response.json();\r",
+                  "if (jsonData.id) {\r",
+                  "    pm.environment.set(\"invoice_id\", jsonData.id);\r",
+                  "    console.log(\"Đã lưu Invoice ID: \" + jsonData.id);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageId\": 1,\r\n    \"paymentMethod\": \"CASH\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/buy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "buy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_07 (Lỗi Mua gói không tồn tại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 404 Not Found\", () => { pm.response.to.have.status(404); });\r",
+                  "pm.test(\"Báo lỗi không tìm thấy\", () => { pm.expect(pm.response.text()).to.include(\"không tồn tại\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageId\": 999,\r\n    \"paymentMethod\": \"MOMO\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/buy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "buy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_08 (Lỗi Sai phương thức thanh toán)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Báo lỗi phương thức sai\", () => { pm.expect(pm.response.text()).to.include(\"không hợp lệ\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageId\": 1,\r\n    \"paymentMethod\": \"MOMO\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/buy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "buy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_09 (Lỗi Bỏ trống PackageID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });\r",
+                  "    pm.test(\"Báo lỗi thiếu ID\", () => { pm.expect(pm.response.text()).to.include(\"trống\"); });\r",
+                  "    "
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageId\": null,\r\n    \"paymentMethod\": \"MOMO\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/buy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "buy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin duyệt Hóa đơn (TC_MEM_03 & TC_MEM_10)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "pm.test(\"Trạng thái chuyển thành PAID\", function () {\r",
+                  "    pm.expect(pm.response.json().status).to.eql(\"PAID\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/{{invoice_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "{{invoice_id}}",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_12_Loi_QuyenUser",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 403 Forbidden\", () => { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/{{invoice_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "{{invoice_id}}",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_11_Loi_Duyet2Lan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200 OK\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "pm.test(\"Trạng thái chuyển thành PAID\", function () {\r",
+                  "    pm.expect(pm.response.json().status).to.eql(\"PAID\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/membership/{{invoice_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "{{invoice_id}}",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_01_Admin_TaoGoiTap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 Created\", function () {\r",
+                  "    pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "// Trích xuất ID gói tập lưu vào môi trường\r",
+                  "var jsonData = pm.response.json();\r",
+                  "if (jsonData.id) {\r",
+                  "    pm.environment.set(\"package_id\", jsonData.id);\r",
+                  "    console.log(\"Đã lưu Package ID: \" + jsonData.id);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageName\": \"Gói VIP 1 Tháng\",\r\n    \"price\": 500000,\r\n    \"durationMonths\": 1,\r\n    \"description\": \"Gói tập full dịch vụ phòng Gym trong 30 ngày\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_02 (Giá tiền âm)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo giá tiền sai\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"lớn hơn 0\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageName\": \"Gói Lỗi Giá Âm\",\r\n    \"price\": -50000,\r\n    \"durationMonths\": 1,\r\n    \"description\": \"Cố tình test giá trị âm\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_03 (Thời hạn bằng 0)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo thời hạn sai\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"Tối thiểu 1\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageName\": \"Gói Lỗi Thời Hạn\",\r\n    \"price\": 500000,\r\n    \"durationMonths\": 0,\r\n    \"description\": \"Cố tình test thời hạn 0 tháng\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_04 (Tạo trùng tên gói tập gốc)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 409 Conflict\", function () {\r",
+                  "    pm.response.to.have.status(409);\r",
+                  "});\r",
+                  "pm.test(\"Bắt thông báo trùng tên\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"tồn tại\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"packageName\": \"Gói VIP 1 Tháng\", \r\n    \"price\": 500000,\r\n    \"durationMonths\": 1,\r\n    \"description\": \"Test đụng độ tên đã có trong Database\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/packages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "packages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_MEM_13_User_XemThe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Xem thẻ thành công 200\", () => { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/membership/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "membership",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Gym Class",
+      "item": [
+        {
+          "name": "Trainer tạo lớp học (TC_CLS_01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Trainer tạo lớp thành công (201 Created)\", () => { pm.response.to.have.status(201); });\r",
+                  "var res = pm.response.json();\r",
+                  "pm.environment.set(\"class_id\", res.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Lớp Check-in Cuối Cùng\",\r\n    \"date\": \"2026-05-03\", \r\n    \"startTime\": \"15:00\",\r\n    \"endTime\": \"16:00\",\r\n    \"maxCapacity\": 2,\r\n    \"schedule\": \"15:00 - 16:00\",\r\n    \"studio\": \"Phòng Yoga 01\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trainer sửa lớp học (TC_CLS_02 / TC_CLS_06)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Đáng lẽ sửa thành công phải là 200\r",
+                  "pm.test(\"Status is 200 OK\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Yoga Nâng Cao\",\r\n    \"date\": \"2026-05-10\", \r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"09:00\",\r\n    \"maxCapacity\": 2,\r\n    \"schedule\": \"08:00 - 09:00\",\r\n    \"studio\": \"Phòng Yoga 01\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bắt lỗi tạo lớp sai giờ (TC_CLS_03)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { \r",
+                  "    pm.response.to.have.status(400); \r",
+                  "});\r",
+                  "pm.test(\"Server phải báo lỗi thời gian\", () => { \r",
+                  "    // Check xem câu lỗi có chứa từ khóa liên quan đến thời gian không\r",
+                  "    pm.expect(pm.response.text()).to.include(\"sau\"); // VD: \"Giờ kết thúc phải sau giờ bắt đầu\"\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Yoga Lỗi\",\r\n        \"schedule\": \"Chủ Nhật\",\r\n        \"date\": \"2026-12-30\",\r\n        \"startTime\": \"19:00\",\r\n        \"endTime\": \"18:00\",\r\n        \"studio\": \"Phòng A1\",\r\n        \"maxCapacity\": 2\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User đặt lớp học (Bổ sung để làm dữ liệu cho Check-in)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}/book",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}",
+                "book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_02 (Lỗi Ngày trong quá khứ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Báo lỗi ngày không hợp lệ\", () => { pm.expect(pm.response.text()).to.include(\"quá khứ\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Yoga Cơ Bản\",\r\n    \"date\": \"2023-05-10\", \r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"09:00\",\r\n    \"maxCapacity\": 2,\r\n    \"schedule\": \"08:00 - 09:00\",\r\n    \"studio\": \"Phòng Yoga 01\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_04 (Lỗi Sức chứa bằng 0)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "pm.test(\"Báo lỗi sức chứa tối thiểu\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"lớn hơn 0\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Yoga Cơ Bản\",\r\n    \"date\": \"2026-05-10\", \r\n    \"startTime\": \"08:00\",\r\n    \"endTime\": \"09:00\",\r\n    \"maxCapacity\": 0,\r\n    \"schedule\": \"08:00 - 09:00\",\r\n    \"studio\": \"Phòng Yoga 01\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_08_Trainer_XoaLop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 204 No Content\", function () {\r",
+                  "    pm.response.to.have.status(204);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_10_Loi_XoaLopNguoiKhac",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi phân quyền 403/400\", function () {\r",
+                  "    pm.expect(pm.response.code).to.be.oneOf([403, 400]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_11 (User Đặt lớp thành công)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Book lớp thành công\", () => { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}/book",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}",
+                "book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_14 (Lỗi Đã đặt rồi nhưng cố tình đặt nữa)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Báo lỗi đã đăng ký\", () => { pm.expect(pm.response.text()).to.include(\"đăng ký\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}/book",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}",
+                "book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_09 (Lỗi Xóa lớp đang có người)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Báo lỗi đang có học viên\", () => { pm.expect(pm.response.text()).to.include(\"học viên\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_07 (Lỗi Sửa sức chứa nhỏ hơn số người đang có)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{trainer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"name\": \"Yoga Cơ Bản\",\r\n        \"date\": \"2026-05-10\", \r\n        \"startTime\": \"08:00\",\r\n        \"endTime\": \"09:00\",\r\n        \"maxCapacity\": 0,\r\n        \"schedule\": \"08:00 - 09:00\",\r\n        \"studio\": \"Phòng Yoga 01\"\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_15 (User Hủy lớp thành công)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Hủy thành công 204/200\", () => { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_16 (Lỗi Chưa book mà đòi hủy)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 hoặc 404\", () => { pm.expect(pm.response.code).to.be.oneOf([400, 404]); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/classes/{{class_id}}/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "{{class_id}}",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Check-in",
+      "item": [
+        {
+          "name": "Check-in vào cổng Gym hợp lệ (TC_CHK_01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Vào cổng thành công\", () => { pm.response.to.have.status(200); });\r",
+                  "    "
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"classId\": null,\r\n        \"method\": \"QR_CODE\"\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CHK_08_Loi_SaiMethod.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"classId\": null,\r\n    \"method\": \"VANTAY\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bắt lỗi điểm danh lớp học (TC_CHK_02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { \r",
+                  "    pm.response.to.have.status(400); \r",
+                  "});\r",
+                  "pm.test(\"Server phải báo chưa đến giờ\", () => { \r",
+                  "    pm.expect(pm.response.text()).to.include(\"Chưa đến giờ điểm danh\"); \r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"classId\": {{class_id}},\r\n        \"method\": \"FACE_RECOGNITION\"\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CHK_04 (Lỗi điểm danh lớp - Chưa Book mà đòi vào)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 Bad Request\", () => { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"classId\": 4,\r\n    \"method\": \"QR_CODE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CHK_05 BOOK LỚP 05",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"classId\": 4,\r\n        \"method\": \"QR_CODE\"\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/5/book",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "5",
+                "book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CLS_13_Loi_UserTrungLich",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi trùng lịch 400\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Check câu lỗi\", () => { pm.expect(pm.response.text()).to.include(\"trùng lịch\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"classId\": 7,\r\n    \"method\": \"QR_CODE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/classes/7/book",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "classes",
+                "7",
+                "book"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CHK_05 (Lỗi điểm danh quá sớm)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Bắt lỗi 400 - Điểm danh sớm\", () => { pm.response.to.have.status(400); });\r",
+                  "pm.test(\"Check log quá sớm\", () => { pm.expect(pm.response.text()).to.include(\"Chưa đến giờ\"); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n        \"classId\": 5,\r\n        \"method\": \"QR_CODE\"\r\n    }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "TC_CHK_06_Loi_DiemDanhTre.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Điểm danh thành công 200\", () => { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"classId\": 6,\r\n    \"method\": \"QR_CODE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkin/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "checkin",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
