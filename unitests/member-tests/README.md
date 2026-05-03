@@ -1,8 +1,4 @@
-# Member Tests Bundle
-
-Bộ test độc lập cho màn hình **Hội viên (Member)** — KHÔNG cần gộp vào dự án chính.
-Có thể chạy riêng trong một project test, hoặc copy file vào project local của em.
-
+Cách sử dụng
 ## Nội dung
 
 ```
