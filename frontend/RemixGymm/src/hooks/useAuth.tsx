@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
-import { api } from "@/lib/api";
+import { api } from "@/api/api";
 
 interface AuthUser {
   id: string;
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = useCallback(async () => {
     try {
       // BE: GET /api/auth/me -> UserResponse
-      const data = await api.get<Profile>("/auth/me");
+      const data = await api.get<Profile>("/users/me");
       setProfile(data);
       setUser((prev) =>
         prev

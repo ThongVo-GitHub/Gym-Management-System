@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { useCountUp } from "@/hooks/useCountUp";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
+import { useMembership } from "@/hooks/useMembership1";
+
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
   const count = useCountUp(end, 2000);
@@ -36,23 +38,27 @@ const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: st
 const Profile = () => {
   const { profile, user, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
-  const [editData, setEditData] = useState({ full_name: "", email: "", phone: "", address: "" });
+  // Đã đồng bộ fullName với User.java
+  const [editData, setEditData] = useState({ fullName: "", email: "", phone: "", address: "" });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: membership } = useMembership();
 
-  const { data: checkinCount = 0 } = useQuery<number>({
-    queryKey: ["checkin-count", user?.id],
-    queryFn: async () => {
-      try { return await api.get<number>("/checkins/count"); } catch { return 0; }
-    },
-    enabled: !!user,
-  });
+
+  const checkinCount = 0;
+  // const { data: checkinCount = 0 } = useQuery<number>({
+  //   queryKey: ["checkin-count", user?.id],
+  //   queryFn: async () => {
+  //     try { return await api.get<number>("/checkins/count"); } catch { return 0; }
+  //   },
+  //   enabled: !!user,
+  // });
 
   const { data: monthsActive = 0 } = useQuery<number>({
-    queryKey: ["months-active", profile?.created_at],
+    queryKey: ["months-active", profile?.createdAt],
     queryFn: () => {
-      if (!profile?.created_at) return 0;
-      const created = new Date(profile.created_at);
+      if (!profile?.createdAt) return 0;
+      const created = new Date(profile.createdAt);
       const now = new Date();
       return Math.max(1, Math.ceil((now.getTime() - created.getTime()) / (30 * 24 * 60 * 60 * 1000)));
     },
@@ -69,7 +75,6 @@ const Profile = () => {
 
     setUploading(true);
     try {
-      // Upload sang Java backend bằng multipart/form-data
       const formData = new FormData();
       formData.append("file", file);
       const token = localStorage.getItem("token");
@@ -91,7 +96,7 @@ const Profile = () => {
 
   const handleEdit = () => {
     setEditData({
-      full_name: profile.full_name,
+      fullName: profile.fullName || "", // Sử dụng fullName đồng bộ
       email: profile.email,
       phone: profile.phone || "",
       address: profile.address || "",
@@ -102,9 +107,9 @@ const Profile = () => {
   const handleSave = async () => {
     if (!user) return;
     try {
+      // Gửi đúng trường fullName lên Backend
       await api.put("/users/me", {
-        fullName: editData.full_name,
-        full_name: editData.full_name,
+        fullName: editData.fullName,
         phone: editData.phone,
         address: editData.address,
       });
@@ -123,8 +128,10 @@ const Profile = () => {
     { icon: Mail, label: "Email", key: "email" as const, accent: "200, 70%, 50%", editable: false },
     { icon: Phone, label: "Số điện thoại", key: "phone" as const, accent: "152, 60%, 48%", editable: true },
     { icon: MapPin, label: "Địa chỉ", key: "address" as const, accent: "38, 92%, 50%", editable: true },
-    { icon: CreditCard, label: "Gói hiện tại", key: "package" as const, accent: "280, 60%, 55%", editable: false,
-      suffix: profile.package_expiry ? ` - Hết hạn ${new Date(profile.package_expiry).toLocaleDateString("vi-VN")}` : "" },
+    {
+      icon: CreditCard, label: "Gói hiện tại", key: "package" as const, accent: "280, 60%, 55%", editable: false,
+      suffix: profile.expiredDate ? ` - Hết hạn ${new Date(profile.expiredDate).toLocaleDateString("vi-VN")}` : ""
+    },
   ];
 
   const attendanceRate = checkinCount > 0 ? Math.min(100, Math.round((checkinCount / (monthsActive * 20)) * 100)) : 0;
@@ -157,12 +164,12 @@ const Profile = () => {
             title="Thay đổi ảnh đại diện"
             disabled={uploading}
           >
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-2xl font-extrabold text-white btn-gradient">
                 <span className="relative z-10">
-                  {profile.full_name.split(" ").slice(-2).map(w => w[0]).join("")}
+                  {(profile.fullName || "User").split(" ").slice(-2).map(w => w[0]).join("")}
                 </span>
               </div>
             )}
@@ -173,26 +180,29 @@ const Profile = () => {
           <div>
             {editing ? (
               <Input
-                value={editData.full_name}
-                onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
+                value={editData.fullName}
+                onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
                 className="text-xl font-extrabold bg-transparent border-border rounded-xl"
               />
             ) : (
-              <h2 className="text-xl font-extrabold tracking-tight">{profile.full_name}</h2>
+              <h2 className="text-xl font-extrabold tracking-tight">{profile.fullName || "Chưa cập nhật tên"}</h2>
             )}
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <Shield className="w-3.5 h-3.5 text-primary/70" />
-              {profile.package} • <span className="font-mono">{profile.member_id}</span>
+              {profile.role} • <span className="font-mono">{profile.username}</span>
             </p>
           </div>
         </div>
 
         <div className="space-y-3">
           {profileItems.map((item, i) => {
-            const value = item.key === "package" ? (profile.package || "Twelve Lite") :
+            const value = item.key === "package"
+              ? (profile.role === "ADMIN"
+                ? "Quản trị viên"
+                : membership?.packageName || "Chưa có gói") :
               item.key === "email" ? profile.email :
-              item.key === "phone" ? (profile.phone || "") :
-              (profile.address || "");
+                item.key === "phone" ? (profile.phone || "Chưa cập nhật") :
+                  (profile.address || "Chưa cập nhật");
             return (
               <div
                 key={i}
@@ -242,7 +252,7 @@ const Profile = () => {
       </div>
 
       <footer className="text-center text-xs text-muted-foreground pt-4 pb-2 animate-fade-in" style={{ animationDelay: "600ms" }}>
-        © 2023 TwelveFit Gym. All rights reserved.
+        © 2026 TwelveFit Gym. All rights reserved.
       </footer>
     </div>
   );

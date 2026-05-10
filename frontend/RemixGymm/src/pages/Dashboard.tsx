@@ -1,3 +1,4 @@
+import { useMembership } from "@/hooks/useMembership1";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -6,8 +7,9 @@ import {
 } from "lucide-react";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
+
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
   const count = useCountUp(end, 2200);
@@ -30,7 +32,9 @@ interface ScheduleRow { id: string; name: string; trainer: string; scheduled_dat
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const schedules: any[] = [];
   const { profile, user } = useAuth();
+  const { data: membership } = useMembership();
 
   const { data: checkins = [] } = useQuery<CheckinRow[]>({
     queryKey: ["recent-checkins", user?.id],
@@ -40,22 +44,24 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
-  const { data: schedules = [] } = useQuery<ScheduleRow[]>({
-    queryKey: ["recent-schedules", user?.id],
-    queryFn: async () => {
-      try { return await api.get<ScheduleRow[]>("/schedules?limit=2"); } catch { return []; }
-    },
-    enabled: !!user,
-  });
+  // const { data: schedules = [] } = useQuery<ScheduleRow[]>({
+  //   queryKey: ["recent-schedules", user?.id],
+  //   queryFn: async () => {
+  //     try { return await api.get<ScheduleRow[]>("/schedules?limit=2"); } catch { return []; }
+  //   },
+  //   enabled: !!user,
+  // });
 
-  const { data: totalCheckins = 0 } = useQuery<number>({
-    queryKey: ["dashboard-total-checkins", user?.id],
-    queryFn: async () => {
-      try { return await api.get<number>("/checkins/count"); } catch { return 0; }
-    },
-    enabled: !!user,
-  });
+   const totalCheckins = 0;
+  // const { data: totalCheckins = 0 } = useQuery<number>({
+  //   queryKey: ["dashboard-total-checkins", user?.id],
+  //   queryFn: async () => {
+  //     try { return await api.get<number>("/checkins/count"); } catch { return 0; }
+  //   },
+  //   enabled: !!user,
+  // });
 
+  const scheduleCount = 0;
   // const { data: scheduleCount = 0 } = useQuery<number>({
   //   queryKey: ["dashboard-schedule-count", user?.id],
   //   queryFn: async () => {
@@ -70,8 +76,8 @@ const Dashboard = () => {
       activities.push({
         icon: Dumbbell,
         iconClass: "icon-glow-red",
-        title: `${s.name} – ${s.trainer}`,
-        subtitle: `${new Date(s.scheduled_date).toLocaleDateString("vi-VN")}, ${s.start_time?.slice(0, 5)}`,
+        title: `${s.name} – ${s.trainerName || 'HLV'}`,
+        subtitle: `${s.date ? new Date(s.date).toLocaleDateString("vi-VN") : ''}, ${s.startTime?.slice(0, 5) || ''}`,
       });
     });
     checkins.slice(0, 1).forEach(c => {
@@ -91,11 +97,13 @@ const Dashboard = () => {
     { icon: CreditCard, title: "Đổi dịch vụ", desc: "Gia hạn hoặc mua thêm", gradient: false, path: "/packages" },
     { icon: QrCode, title: "Mã Check-in (QR)", desc: "Dùng để vào phòng tập", gradient: false, path: "/checkin" },
   ];
-
-  const memberName = profile?.full_name || user?.fullName || user?.email || "Hội viên";
-  const memberPackage = profile?.package || "Twelve Lite";
-  const memberId = profile?.member_id || "";
-  const memberExpiry = profile?.package_expiry ? new Date(profile.package_expiry).toLocaleDateString("vi-VN") : "";
+// Dashboard.tsx - Bản fix đồng bộ với Backend[cite: 6, 7]
+const memberName = profile?.fullName || user?.username || user?.email || "Hội viên";
+const memberPackage = membership?.packageName || "Chưa có gói";
+const memberExpiry = membership?.expiredDate
+  ? new Date(membership.expiredDate).toLocaleDateString("vi-VN")
+  : "Chưa có";
+const memberId = profile?.id ? String(profile.id) : user?.id || "";
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">

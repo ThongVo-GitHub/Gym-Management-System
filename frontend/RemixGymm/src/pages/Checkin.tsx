@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import { useCountUp } from "@/hooks/useCountUp";
 import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/hooks/useAuth";
-import { api } from "@/lib/api";
+import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
+import { useMembership } from "@/hooks/useMembership1";
+
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
   const count = useCountUp(end, 2000);
@@ -28,6 +30,7 @@ interface CheckinRow { id: string | number; branch: string; checked_in_at: strin
 
 const Checkin = () => {
   const { profile, user } = useAuth();
+  const { data: membership } = useMembership();
   const [showQR, setShowQR] = useState(false);
   const [qrTimestamp, setQrTimestamp] = useState<string>("");
   const [showCheckinResult, setShowCheckinResult] = useState(false);
@@ -35,11 +38,12 @@ const Checkin = () => {
   const { data: checkins = [], refetch: refetchCheckins } = useQuery<CheckinRow[]>({
     queryKey: ["checkins", user?.id],
     queryFn: async () => {
-      try { return await api.get<CheckinRow[]>("/checkins?limit=10"); } catch { return []; }
+      try { return await api.get<CheckinRow[]>("/checkin/verify?limit=10"); } catch { return []; }
     },
     enabled: !!user,
   });
 
+  const totalCheckins = 0;
   // const { data: totalCheckins = 0 } = useQuery<number>({
   //   queryKey: ["total-checkins", user?.id],
   //   queryFn: async () => {
@@ -62,14 +66,14 @@ const Checkin = () => {
   }, [checkins]);
 
   const memberData = {
-    action: "CHECK_IN",
-    memberId: profile?.member_id || "",
-    memberName: profile?.full_name || "",
-    membership: "Đang hoạt động",
-    package: profile?.package || "Twelve Lite",
-    branch: profile?.branch || "Chi nhánh Quận 1",
-    loyaltyStreak: streakDays,
-  };
+  action: "CHECK_IN",
+  memberId: profile?.id ? String(profile.id) : user?.id || "",
+  memberName: profile?.fullName || "",
+  membership: "Đang hoạt động",
+  package: membership?.packageName || "Chưa có gói",
+  branch: profile?.branch || "Chi nhánh Quận 1",
+  loyaltyStreak: streakDays,
+};
 
   const qrData = useMemo(() => {
     if (!showQR) return "";
@@ -82,21 +86,25 @@ const Checkin = () => {
   }, [showQR, qrTimestamp, memberData]);
 
   const handleGenerate = async () => {
-    if (!user) return;
-    const ts = Date.now().toString();
+  if (!user) return;
+  const ts = Date.now().toString();
+  setShowCheckinResult(false);
+
+  try {
+    await api.post("/checkin/verify", {
+      classId: null,
+      method: "QR_CODE",
+    });
+    // ✅ Chỉ hiện QR khi thành công
     setQrTimestamp(ts);
     setShowQR(true);
-    setShowCheckinResult(false);
-
-    try {
-      await api.post("/checkins", { branch: profile?.branch || "Chi nhánh Quận 1" });
-      refetchCheckins();
-      toast.success(`Check-in thành công lúc ${new Date().toLocaleTimeString("vi-VN")}!`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Check-in thất bại");
-    }
-  };
+    refetchCheckins();
+    toast.success(`Check-in thành công lúc ${new Date().toLocaleTimeString("vi-VN")}!`);
+  } catch (err) {
+    console.error(err);
+    toast.error("Check-in thất bại");
+  }
+};
 
   const handleSimulateScan = () => {
     setShowCheckinResult(true);
@@ -133,14 +141,14 @@ const Checkin = () => {
           <div className="rounded-xl p-4 text-left space-y-2.5" style={{ background: "hsla(152, 18%, 12%, 0.35)", border: "1px solid hsla(152, 40%, 22%, 0.25)" }}>
             <p className="text-sm flex items-center gap-2">
               <UserCheck className="w-3.5 h-3.5" style={{ color: "hsl(152, 60%, 48%)" }} />
-              <span className="text-muted-foreground">Họ tên:</span> <span className="font-semibold">{profile?.full_name}</span>
+              <span className="text-muted-foreground">Họ tên:</span> <span className="font-semibold">{profile?.fullName}</span>
             </p>
             <p className="text-sm flex items-center gap-2">
               <ShieldCheck className="w-3.5 h-3.5" style={{ color: "hsl(152, 60%, 48%)" }} />
               <span className="text-muted-foreground">Trạng thái:</span> <span className="status-active">Đang hoạt động</span>
             </p>
             <p className="text-sm">
-              <span className="text-muted-foreground">ID:</span> <span className="font-mono font-bold">{profile?.member_id}</span>
+              <span className="text-muted-foreground">ID:</span> <span className="font-mono font-bold">{profile?.id ? String(profile.id) : user?.id || "—"}</span>
             </p>
           </div>
 
@@ -187,7 +195,7 @@ const Checkin = () => {
                 <h3 className="font-bold text-lg flex items-center justify-center gap-2">
                   <BadgeCheck className="w-5 h-5" style={{ color: "hsl(200, 70%, 55%)" }} /> Check-in thành công
                 </h3>
-                <p className="text-xs text-muted-foreground mt-1">Chào mừng đến TwelveFit, {profile?.full_name?.split(" ").pop()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Chào mừng đến TwelveFit, {profile?.fullName?.split(" ").pop()}</p>
               </div>
               <div className="rounded-xl p-4 space-y-2.5 text-left mx-auto max-w-[300px]" style={{ background: "hsla(210, 25%, 12%, 0.7)", border: "1px solid hsla(200, 40%, 25%, 0.3)" }}>
                 <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Họ tên</span><span className="font-semibold">{memberData.memberName}</span></div>

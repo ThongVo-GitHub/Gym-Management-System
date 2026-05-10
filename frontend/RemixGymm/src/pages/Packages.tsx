@@ -1,25 +1,36 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Clock, ArrowRight, Dumbbell, Crown, GraduationCap, Award, Sparkles, Users, Zap, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCountUp } from "@/hooks/useCountUp";
-import { api } from "@/lib/api";
+import { api } from "@/api/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMembership } from "@/hooks/useMembership1";
 
 const packages = [
-  { id: 1, name: "TWELVE LITE", duration: "1 tháng", price: "500.000",
+  {
+    id: 1, name: "TWELVE LITE", duration: "1 tháng", price: "500.000",
     description: "Gói cơ bản dành cho người mới bắt đầu. Tự do tập gym không giới hạn thời gian trong ngày, sử dụng toàn bộ thiết bị tại phòng tập.",
-    popular: false, label: "", icon: Dumbbell, accent: "200, 70%, 50%" },
-  { id: 2, name: "TWELVE STUDENT", duration: "3 tháng", price: "1.200.000",
+    popular: false, label: "", icon: Dumbbell, accent: "200, 70%, 50%"
+  },
+  {
+    id: 2, name: "TWELVE STUDENT", duration: "3 tháng", price: "1.200.000",
     description: "Ưu đãi dành cho học sinh, sinh viên. Tập gym không giới hạn, được hướng dẫn lịch tập cơ bản và tham gia 4 buổi group training miễn phí.",
-    popular: false, label: "ƯU ĐÃI", icon: GraduationCap, accent: "152, 60%, 48%" },
-  { id: 3, name: "TWELVE ELITE", duration: "6 tháng", price: "2.400.000",
+    popular: false, label: "ƯU ĐÃI", icon: GraduationCap, accent: "152, 60%, 48%"
+  },
+  {
+    id: 3, name: "TWELVE ELITE", duration: "6 tháng", price: "2.400.000",
     description: "Gói phổ biến nhất. Tập gym không giới hạn, 12 buổi group training, 3 buổi PT cá nhân, tư vấn dinh dưỡng cơ bản và ưu tiên đặt lịch.",
-    popular: true, label: "PHỔ BIẾN", icon: Award, accent: "359, 65%, 50%" },
-  { id: 4, name: "TWELVE PLATINUM", duration: "12 tháng", price: "4.200.000",
+    popular: true, label: "PHỔ BIẾN", icon: Award, accent: "359, 65%, 50%"
+  },
+  {
+    id: 4, name: "TWELVE PLATINUM", duration: "12 tháng", price: "4.200.000",
     description: "Gói cao cấp nhất. Full quyền lợi, PT riêng hàng tuần, group training không giới hạn, tư vấn dinh dưỡng chuyên sâu, locker riêng và khăn tập miễn phí.",
-    popular: false, label: "", icon: Crown, accent: "38, 92%, 50%" },
+    popular: false, label: "", icon: Crown, accent: "38, 92%, 50%"
+  },
 ];
 
 const StatCounter = ({ end, label, icon: Icon, color }: { end: number; label: string; icon: React.ElementType; color?: string }) => {
@@ -51,10 +62,8 @@ const Packages = () => {
   const [search, setSearch] = useState("");
   const [registering, setRegistering] = useState<number | null>(null);
   const { user, refreshProfile } = useAuth();
-
-  const filtered = packages.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const queryClient = useQueryClient(); // ← thêm dòng này
+  const { data: membership } = useMembership();
 
   const handleRegister = async (pkg: (typeof packages)[0]) => {
     if (!user) {
@@ -63,25 +72,23 @@ const Packages = () => {
     }
     setRegistering(pkg.id);
     try {
-      const expiry = new Date();
-      const months = pkg.id === 1 ? 1 : pkg.id === 2 ? 3 : pkg.id === 3 ? 6 : 12;
-      expiry.setMonth(expiry.getMonth() + months);
-      const expiryStr = expiry.toISOString().split("T")[0];
-
-      await api.put("/users/me", {
-        package: pkg.name,
-        package_expiry: expiryStr,
-        packageExpiry: expiryStr,
+      await api.post("/membership/buy", {
+        packageId: pkg.id,
+        paymentMethod: "CASH",
       });
-
+      await queryClient.invalidateQueries({ queryKey: ["membership-me"] });
       await refreshProfile();
-      toast.success(`Đăng ký thành công gói ${pkg.name}!`);
+      toast.info("Đang đợi xác nhận thanh toán. Vui lòng chờ Admin xác nhận!", {
+        duration: 5000,
+      });
     } catch (err: any) {
       toast.error("Đăng ký thất bại: " + err.message);
     } finally {
       setRegistering(null);
     }
   };
+  const filtered = packages.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
@@ -89,10 +96,10 @@ const Packages = () => {
         <p className="text-muted-foreground text-sm font-medium animate-fade-down" style={{ animationDelay: '100ms' }}>
           Khám phá các gói tập phù hợp
         </p>
-         <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight uppercase animate-fade-down flex items-center gap-2" style={{ animationDelay: '200ms' }}>
-           <CreditCard className="w-7 h-7" style={{ color: "hsl(var(--primary))" }} />
-           Các gói hội viên TwelveFit
-         </h1>
+        <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight uppercase animate-fade-down flex items-center gap-2" style={{ animationDelay: '200ms' }}>
+          <CreditCard className="w-7 h-7" style={{ color: "hsl(var(--primary))" }} />
+          Các gói hội viên TwelveFit
+        </h1>
         <p className="stroke-text-subtle text-4xl lg:text-5xl font-black uppercase tracking-wider mt-1 select-none" aria-hidden="true">
           PACKAGES
         </p>
@@ -181,6 +188,12 @@ const Packages = () => {
                 {pkg.description}
               </p>
 
+              {membership?.packageName === pkg.name && (
+                <div className="w-full text-center text-xs font-semibold py-1.5 rounded-xl mb-2"
+                  style={{ background: "hsla(152, 60%, 48%, 0.1)", color: "hsl(152, 60%, 48%)" }}>
+                  ✓ Gói đang hoạt động
+                </div>
+              )}
               <Button
                 size="sm"
                 onClick={() => handleRegister(pkg)}
