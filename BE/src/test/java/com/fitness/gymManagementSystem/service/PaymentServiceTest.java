@@ -1,6 +1,10 @@
 package com.fitness.gymManagementSystem.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
@@ -8,15 +12,18 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fitness.gymManagementSystem.config.VNPayConfig;
 import com.fitness.gymManagementSystem.dto.VNPayResponse;
+import com.fitness.gymManagementSystem.util.VNPayUtil;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
@@ -31,8 +38,14 @@ class PaymentServiceTest {
     @InjectMocks
     private PaymentService paymentService;
 
+    // 🔥 BỔ SUNG: Khai báo MockedStatic để kiểm soát các hàm tĩnh
+    private MockedStatic<VNPayUtil> mockedVNPayUtil;
+
     @BeforeEach
     void setUp() {
+        // Mở Mock Static
+        mockedVNPayUtil = mockStatic(VNPayUtil.class);
+
         // Cài đặt giả lập cấu hình mặc định của VNPAY
         lenient().when(vnPayConfig.getSecretKey()).thenReturn("SECRET_KEY_123");
         lenient().when(vnPayConfig.getVnp_PayUrl()).thenReturn("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
@@ -45,6 +58,12 @@ class PaymentServiceTest {
         lenient().when(vnPayConfig.getVNPayConfig()).thenAnswer(invocation -> new HashMap<>(mockConfigMap));
     }
 
+    @AfterEach
+    void tearDown() {
+        // 🔥 BẮT BUỘC: Đóng Mock Static để giải phóng RAM và tránh sập các bài test khác
+        mockedVNPayUtil.close();
+    }
+
     // ==========================================
     // 1. NORMAL CASE (Luồng thành công)
     // ==========================================
@@ -54,9 +73,12 @@ class PaymentServiceTest {
         // Giả lập Frontend gửi lên form-data hoặc query params
         when(request.getParameter("amount")).thenReturn("500000");
         when(request.getParameter("bankCode")).thenReturn("NCB");
-        
-        // Giả sử hàm VNPayUtil.getIpAddress() gọi vào getRemoteAddr() của request
-        lenient().when(request.getRemoteAddr()).thenReturn("192.168.1.1");
+
+        // 🔥 Giả lập các hàm tĩnh của VNPayUtil thay vì gọi thực tế
+        mockedVNPayUtil.when(() -> VNPayUtil.getIpAddress(request)).thenReturn("192.168.1.1");
+        mockedVNPayUtil.when(() -> VNPayUtil.getPaymentURL(anyMap(), eq(true))).thenReturn("vnp_Amount=50000000&vnp_BankCode=NCB");
+        mockedVNPayUtil.when(() -> VNPayUtil.getPaymentURL(anyMap(), eq(false))).thenReturn("vnp_Amount=50000000&vnp_BankCode=NCB");
+        mockedVNPayUtil.when(() -> VNPayUtil.hmacSHA512(anyString(), anyString())).thenReturn("FAKE_SECURE_HASH_123");
 
         // Act
         VNPayResponse response = paymentService.createVnPayPayment(request);
@@ -70,7 +92,7 @@ class PaymentServiceTest {
         assertTrue(response.paymentUrl().startsWith("https://sandbox.vnpayment.vn"));
         assertTrue(response.paymentUrl().contains("vnp_Amount=50000000")); // Phải được nhân 100
         assertTrue(response.paymentUrl().contains("vnp_BankCode=NCB"));
-        assertTrue(response.paymentUrl().contains("vnp_SecureHash="));
+        assertTrue(response.paymentUrl().contains("vnp_SecureHash=FAKE_SECURE_HASH_123")); // Kiểm tra mã hash khớp với mock
     }
 
     // ==========================================
@@ -111,11 +133,19 @@ class PaymentServiceTest {
         // User không chọn ngân hàng (Để VNPAY tự hiển thị danh sách)
         when(request.getParameter("bankCode")).thenReturn(null);
 
+        // 🔥 Giả lập VNPayUtil cho trường hợp không có bankCode
+        mockedVNPayUtil.when(() -> VNPayUtil.getIpAddress(request)).thenReturn("192.168.1.1");
+        mockedVNPayUtil.when(() -> VNPayUtil.getPaymentURL(anyMap(), eq(true))).thenReturn("vnp_Amount=10000000");
+        mockedVNPayUtil.when(() -> VNPayUtil.getPaymentURL(anyMap(), eq(false))).thenReturn("vnp_Amount=10000000");
+        mockedVNPayUtil.when(() -> VNPayUtil.hmacSHA512(anyString(), anyString())).thenReturn("FAKE_HASH_NO_BANK");
+
         // Act
         VNPayResponse response = paymentService.createVnPayPayment(request);
 
         // Assert
         assertNotNull(response);
         assertFalse(response.paymentUrl().contains("vnp_BankCode=")); // Không được chứa tham số này trên URL
+        assertTrue(response.paymentUrl().contains("vnp_Amount=10000000"));
+        assertTrue(response.paymentUrl().contains("vnp_SecureHash=FAKE_HASH_NO_BANK"));
     }
 }

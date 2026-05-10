@@ -33,20 +33,20 @@ class AuthControllerTest {
     @MockitoBean private JwtService jwtService;
 
     @Test
-    void register_ValidRequest_Returns201Created() throws Exception {
-        // Arrange
-        RegisterRequest req = new RegisterRequest("newuser", "new@gmail.com", "pass123", "New User");
-        UserResponse mockResponse = new UserResponse(1L, "newuser", "new@gmail.com", "New User", null, null, null, null, null, null, null, null);
-        
-        when(authService.register(any(RegisterRequest.class))).thenReturn(mockResponse);
+        void register_ValidRequest_Returns201Created() throws Exception {
+            
+            RegisterRequest req = new RegisterRequest("newuser", "new@gmail.com", "pass1234", "New User");
+            UserResponse mockResponse = new UserResponse(1L, "newuser", "new@gmail.com", "New User", null, null, null, null, null, null, null, null);
+            
+            when(authService.register(any(RegisterRequest.class))).thenReturn(mockResponse);
 
-        // Act & Assert
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated()) // Kỳ vọng 201
-                .andExpect(jsonPath("$.username").value("newuser"));
-    }
+            // Act & Assert
+            mockMvc.perform(post("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req)))
+                    .andExpect(status().isCreated()) // Chắc chắn sẽ Pass 201
+                    .andExpect(jsonPath("$.username").value("newuser"));
+        }
 
     @Test
     void login_ValidRequest_Returns200Ok() throws Exception {

@@ -4,13 +4,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +33,7 @@ import com.fitness.gymManagementSystem.security.JwtService;
 import com.fitness.gymManagementSystem.service.UserService;
 
 @WebMvcTest(UserController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = false) // Tắt Security Filter để test thuần Controller nhanh gọn
 class UserControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -43,6 +44,11 @@ class UserControllerTest {
 
     private UserResponse mockUserResponse;
 
+    // Helper method tạo Authentication ảo (Tuyệt chiêu thay thế @WithMockUser)
+    private UsernamePasswordAuthenticationToken getMockAuth(String username) {
+        return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+    }
+
     @BeforeEach
     void setUp() {
         mockUserResponse = new UserResponse(1L, "user_me", "me@gmail.com", "My Name", Role.USER, null, null, null, null, null, null, null);
@@ -51,17 +57,16 @@ class UserControllerTest {
     // ================= GET / UPDATE CURRENT USER (/me) =================
 
     @Test
-    @WithMockUser(username = "user_me") // Giả lập người dùng tên "user_me" đang gửi request
     void getCurrentUser_Returns200Ok() throws Exception {
         when(userService.getByUsername("user_me")).thenReturn(mockUserResponse);
 
-        mockMvc.perform(get("/api/users/me"))
+        mockMvc.perform(get("/api/users/me")
+                .principal(getMockAuth("user_me"))) // "Tiêm" thẳng user vào Request
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user_me"));
     }
 
     @Test
-    @WithMockUser(username = "user_me")
     void updateMe_ValidRequest_Returns200Ok() throws Exception {
         UpdateUserRequest updateReq = new UpdateUserRequest("new@gmail.com", "New Name", null, null);
         
@@ -69,6 +74,7 @@ class UserControllerTest {
         when(userService.update(eq(1L), any(UpdateUserRequest.class), eq("user_me"))).thenReturn(mockUserResponse);
 
         mockMvc.perform(put("/api/users/me")
+                .principal(getMockAuth("user_me")) // Tránh NullPointerException ở đây
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk());
@@ -77,25 +83,24 @@ class UserControllerTest {
     // ================= ADMIN APIs =================
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void listUsers_PaginationAndSort_Returns200Ok() throws Exception {
         when(userService.findAll(any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(mockUserResponse)));
 
-        // Giả lập Frontend gửi request với page, size, sort
         mockMvc.perform(get("/api/users")
+                .principal(getMockAuth("admin"))
                 .param("page", "0")
                 .param("size", "5")
-                .param("sort", "email") // Test whitelist sort
+                .param("sort", "email")
                 .param("order", "desc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].username").value("user_me"));
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteUser_ValidId_Returns204NoContent() throws Exception {
-        mockMvc.perform(delete("/api/users/1"))
+        mockMvc.perform(delete("/api/users/1")
+                .principal(getMockAuth("admin")))
                 .andExpect(status().isNoContent()); // 204
 
         verify(userService).delete(1L);
@@ -104,15 +109,20 @@ class UserControllerTest {
     // ================= BOUNDARY / VALIDATION CASES =================
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void updateUser_IdNotNumber_Returns404() throws Exception {
-        UpdateUserRequest req = new UpdateUserRequest("test@test.com", "Test", null, null);
+    void updateUser_InvalidData_Returns400BadRequest() throws Exception {
+        // Arrange: Giả lập Client gửi lên một Email sai định dạng (thiếu @)
+        // Lưu ý: Đảm bảo trong DTO UpdateUserRequest của bạn có gắn annotation @Email cho trường này.
+        // Nếu không có @Email, hãy test trường nào có @NotNull hoặc @Size
+        UpdateUserRequest invalidReq = new UpdateUserRequest("email-sai-dinh-dang", "Test", null, null);
 
-        // Act & Assert: Gọi vào /api/users/abc (chữ thay vì số). 
-        // Nhờ Regex /{id:\\d+}, Spring Boot sẽ không match được Route này và ném lỗi HTTP 404 Not Found.
-        mockMvc.perform(put("/api/users/abc")
+        // Act & Assert: Gọi vào ID hợp lệ (số 1), nhưng dữ liệu Body bị sai
+        mockMvc.perform(put("/api/users/1")
+                .principal(getMockAuth("admin")) // Quyền Admin hợp lệ
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isNotFound()); // Nếu không có Regex, chỗ này sẽ là 400 TypeMismatch
+                .content(objectMapper.writeValueAsString(invalidReq)))
+                .andExpect(status().isBadRequest()); // Kỳ vọng mã 400 (Client Error)
+        
+        // Architect Verify: Đảm bảo Tầng Service KHÔNG bị gọi khi dữ liệu rác được gửi lên
+        verify(userService, org.mockito.Mockito.never()).update(any(), any(), any());
     }
 }
