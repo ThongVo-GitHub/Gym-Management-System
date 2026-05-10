@@ -1,0 +1,121 @@
+{
+  "info": {
+    "_postman_id": "0a9903f5-a865-433f-8036-b82b724c0280",
+    "name": "Week8_Hotfix_Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53506622",
+    "_collection_link": "https://go.postman.co/collection/53506622-0a9903f5-a865-433f-8036-b82b724c0280?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "HỦY LỊCH KO THÀNH CÔNG",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY3RpdmUzIiwiaWF0IjoxNzc2NTk1NDMwLCJleHAiOjE3NzY1OTYzMzB9.KGOI4IoUu1rPFVGGigwTCEBuRh4cZ54eXBklt-awK78",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/api/classes/5/cancel",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "classes",
+            "5",
+            "cancel"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ADMIN ĐẶT GÓI KO THÀNH CÔNG",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc3NjU5NTY3NSwiZXhwIjoxNzc2NTk2NTc1fQ.VdvSIuIVuxrmiqTb2CSuhFgN-1SXTd1nB572ft1TgmE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"name\": \"Yoga Lỗi\",\r\n    \"date\": \"2026-04-20\",\r\n    \"startTime\": \"09:30\",\r\n    \"endTime\": \"08:00\",\r\n    \"studio\": \"Studio 1\",\r\n    \"maxCapacity\": 20\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/classes",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "classes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "USER TẠO GÓI THÀNH CÔNG",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhY3RpdmUzIiwiaWF0IjoxNzc2NTk2MTc5LCJleHAiOjE3NzY1OTcwNzl9.V3OqYMXC_dNxV5qCTQ9g-ZfxDpGbi9jMF72slWg2rTA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"packageName\": \"Gói Lỗ Vốn\",\r\n    \"price\": 500000,\r\n    \"durationMonths\": 3,\r\n    \"description\": \"Test giá âm\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/packages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "api",
+            "packages"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
