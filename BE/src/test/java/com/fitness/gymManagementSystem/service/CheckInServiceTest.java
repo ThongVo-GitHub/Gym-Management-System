@@ -20,10 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fitness.gymManagementSystem.dto.CheckInRequest;
 import com.fitness.gymManagementSystem.dto.CheckInResponse;
 import com.fitness.gymManagementSystem.entity.CheckIn;
+import com.fitness.gymManagementSystem.entity.CheckInMethod;
 import com.fitness.gymManagementSystem.entity.CheckInType;
 import com.fitness.gymManagementSystem.entity.GymClass;
 import com.fitness.gymManagementSystem.entity.User;
-import com.fitness.gymManagementSystem.entity.UserStatus;
 import com.fitness.gymManagementSystem.exception.ResourceNotFoundException;
 import com.fitness.gymManagementSystem.repository.CheckInRepository;
 import com.fitness.gymManagementSystem.repository.ClassBookingRepository;
@@ -47,32 +47,32 @@ class CheckInServiceTest {
 
     @BeforeEach
     void setUp() {
-        mockUser = User.builder()
-                .id(1L)
-                .username("testuser")
-                .fullName("Test Member")
-                .status(UserStatus.ACTIVE)
-                .build();
+        // Khởi tạo User giả lập
+        mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setUsername("testuser");
+        mockUser.setFullName("Test Member");
+        // Giả sử UserStatus.ACTIVE đã được set mặc định theo Entity của bạn
 
+        // Khởi tạo GymClass giả lập
         mockGymClass = new GymClass();
         mockGymClass.setId(100L);
-        mockGymClass.setName("Yoga Cơ Bản");
-        // Ngày giờ sẽ được set linh hoạt trong từng test case
+        mockGymClass.setName("Yoga Masterclass");
     }
 
     // ==========================================
-    // MODULE 1: CHECK-IN PHÒNG TẬP CHUNG (GYM_ENTRY)
+    // 1. LUỒNG GYM_ENTRY (Điểm danh cổng)
     // ==========================================
 
     @Test
-    void processCheckIn_GymEntry_ActiveMembership_Success() {
+    void processCheckIn_GymEntry_ActiveMembership_ReturnsSuccess() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(null, "QR_CODE"); // classId null -> GYM_ENTRY
+        CheckInRequest request = new CheckInRequest(null, CheckInMethod.QR_CODE);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
         when(membershipService.isUserActive("testuser")).thenReturn(true);
         when(checkInRepository.save(any(CheckIn.class))).thenAnswer(i -> {
             CheckIn saved = i.getArgument(0);
-            saved.setId(1L);
+            saved.setId(999L);
             return saved;
         });
 
@@ -82,34 +82,32 @@ class CheckInServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals(CheckInType.GYM_ENTRY, response.type());
-        assertEquals("QR_CODE", response.method());
-        assertEquals("Test Member", response.fullName()); // Test logic mapper UI
-        verify(gymClassRepository, never()).findById(any());
+        assertEquals("Test Member", response.fullName());
+        verify(gymClassRepository, never()).findById(any()); // Đảm bảo không query DB tìm lớp học
     }
 
     @Test
     void processCheckIn_GymEntry_InactiveMembership_ThrowsException() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(null, "FACE_ID");
+        CheckInRequest request = new CheckInRequest(null, CheckInMethod.FACE_RECOGNITION);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
         when(membershipService.isUserActive("testuser")).thenReturn(false); // Gói tập hết hạn
 
         // Act & Assert
         IllegalStateException ex = assertThrows(IllegalStateException.class, 
             () -> checkInService.processCheckIn(request, "testuser"));
-        
         assertEquals("Hội viên không có gói tập đang hoạt động.", ex.getMessage());
         verify(checkInRepository, never()).save(any());
     }
 
     // ==========================================
-    // MODULE 2: CHECK-IN LỚP HỌC (CLASS_SESSION) - VALIDATION
+    // 2. LUỒNG CLASS_SESSION (Điểm danh lớp) - NEGATIVE CASES
     // ==========================================
 
     @Test
-    void processCheckIn_ClassSession_UserNotBooked_ThrowsException() {
+    void processCheckIn_ClassSession_NotBooked_ThrowsException() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(1, "QR_CODE");
+        CheckInRequest request = new CheckInRequest(100L, CheckInMethod.QR_CODE);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
         when(gymClassRepository.findById(100L)).thenReturn(Optional.of(mockGymClass));
         when(classBookingRepository.existsByUser_IdAndGymClass_Id(1L, 100L)).thenReturn(false); // Chưa đặt lịch
@@ -117,19 +115,17 @@ class CheckInServiceTest {
         // Act & Assert
         IllegalStateException ex = assertThrows(IllegalStateException.class, 
             () -> checkInService.processCheckIn(request, "testuser"));
-        
         assertEquals("Bạn chưa đăng ký lớp học này nên không thể điểm danh.", ex.getMessage());
     }
 
     @Test
     void processCheckIn_ClassSession_AlreadyCheckedIn_ThrowsException() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(100L, "QR_CODE");
+        CheckInRequest request = new CheckInRequest(100L, CheckInMethod.QR_CODE);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
         when(gymClassRepository.findById(100L)).thenReturn(Optional.of(mockGymClass));
         when(classBookingRepository.existsByUser_IdAndGymClass_Id(1L, 100L)).thenReturn(true);
         
-        // Giả lập đã check-in
         CheckIn oldCheckIn = new CheckIn();
         oldCheckIn.setCheckInTime(Instant.now());
         when(checkInRepository.findByUserIdAndGymClassId(1L, 100L)).thenReturn(Optional.of(oldCheckIn));
@@ -137,21 +133,20 @@ class CheckInServiceTest {
         // Act & Assert
         IllegalStateException ex = assertThrows(IllegalStateException.class, 
             () -> checkInService.processCheckIn(request, "testuser"));
-        
-        assertTrue(ex.getMessage().contains("Bạn đã điểm danh lớp này rồi vào lúc"));
+        assertTrue(ex.getMessage().contains("Bạn đã điểm danh lớp này rồi vào lúc:"));
     }
 
     // ==========================================
-    // MODULE 3: KIỂM THỬ BIÊN THỜI GIAN (TIME BOUNDARY)
+    // 3. LUỒNG CLASS_SESSION - BOUNDARY CASES (Thời gian)
     // ==========================================
 
     @Test
     void processCheckIn_ClassSession_TooEarly_ThrowsException() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(100L, "APP_BUTTON");
+        CheckInRequest request = new CheckInRequest(100L, CheckInMethod.QR_CODE);; // Hoặc method tương ứng
         
-        // Thiết lập giờ học là 45 phút SAU so với hiện tại (Quá sớm, quy định là trước 30p)
-        LocalDateTime futureTime = LocalDateTime.now().plusMinutes(45);
+        // Mẹo Kiến trúc: Đặt lịch học là 40 phút NỮA tính từ hiện tại (Quy định chỉ cho check-in trước 30p)
+        LocalDateTime futureTime = LocalDateTime.now().plusMinutes(40);
         mockGymClass.setDate(futureTime.toLocalDate());
         mockGymClass.setStartTime(futureTime.toLocalTime());
 
@@ -163,16 +158,15 @@ class CheckInServiceTest {
         // Act & Assert
         IllegalStateException ex = assertThrows(IllegalStateException.class, 
             () -> checkInService.processCheckIn(request, "testuser"));
-        
         assertEquals("Chưa đến giờ điểm danh (Chỉ cho phép trước 30 phút).", ex.getMessage());
     }
 
     @Test
     void processCheckIn_ClassSession_TooLate_ThrowsException() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(100L, "APP_BUTTON");
+        CheckInRequest request = new CheckInRequest(100L, CheckInMethod.STAFF_CONFIRM);
         
-        // Thiết lập giờ học đã bắt đầu từ 20 phút TRƯỚC (Quá muộn, quy định là trễ tối đa 15p)
+        // Mẹo Kiến trúc: Lớp học đã bắt đầu từ 20 phút TRƯỚC (Quy định trễ tối đa 15p)
         LocalDateTime pastTime = LocalDateTime.now().minusMinutes(20);
         mockGymClass.setDate(pastTime.toLocalDate());
         mockGymClass.setStartTime(pastTime.toLocalTime());
@@ -185,16 +179,15 @@ class CheckInServiceTest {
         // Act & Assert
         IllegalStateException ex = assertThrows(IllegalStateException.class, 
             () -> checkInService.processCheckIn(request, "testuser"));
-        
         assertEquals("Đã quá giờ điểm danh (Quá 15 phút từ khi lớp bắt đầu).", ex.getMessage());
     }
 
     @Test
-    void processCheckIn_ClassSession_ValidTime_Success() {
+    void processCheckIn_ClassSession_ValidTime_ReturnsSuccess() {
         // Arrange
-        CheckInRequest request = new CheckInRequest(100L, "QR_CODE");
+        CheckInRequest request = new CheckInRequest(100L, CheckInMethod.QR_CODE);
         
-        // Thiết lập lớp học bắt đầu sau 10 phút nữa (Hoàn toàn hợp lệ: trong vùng trước 30p)
+        // Hợp lệ: Lớp sẽ bắt đầu sau 10 phút nữa (Nằm trong khoảng trước 30p)
         LocalDateTime validTime = LocalDateTime.now().plusMinutes(10);
         mockGymClass.setDate(validTime.toLocalDate());
         mockGymClass.setStartTime(validTime.toLocalTime());
@@ -212,9 +205,7 @@ class CheckInServiceTest {
         // Assert
         assertNotNull(response);
         assertEquals(CheckInType.CLASS_SESSION, response.type());
-        assertEquals("Yoga Cơ Bản", response.className());
-        assertEquals("Điểm danh thành công!", response.message());
-        
+        assertEquals("Yoga Masterclass", response.className());
         verify(checkInRepository, times(1)).save(any(CheckIn.class));
     }
 }

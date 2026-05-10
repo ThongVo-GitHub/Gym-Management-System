@@ -22,10 +22,7 @@ public class PaymentController {
 
     @GetMapping("/vn-pay")
     public ResponseEntity<VNPayResponse> pay(HttpServletRequest request) {
-        Long amount = Long.valueOf(request.getParameter("amount"));
-        String orderId = request.getParameter("orderId");
-        String orderInfo = request.getParameter("orderInfo");
-        return ResponseEntity.ok(paymentService.createVnPayPayment(amount, orderId, orderInfo));
+        return ResponseEntity.ok(paymentService.createVnPayPayment(request));
     }
 
     @GetMapping("/vn-pay-callback")
