@@ -1,0 +1,14 @@
+import axiosClient from '@/api/axiosClient';
+
+const userService = {
+  // GET /api/users
+  getAllUsers: () => axiosClient.get('/users'),
+  
+  // GET /api/users/me (Thông tin admin hiện tại)
+  getProfile: () => axiosClient.get('/users/me'),
+  
+  // PUT /api/users/{id}
+  updateUser: (id, data) => axiosClient.put(`/users/${id}`, data),
+};
+
+export default userService;

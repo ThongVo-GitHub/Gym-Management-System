@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Montserrat', sans-serif;
+  --font-luxury: 'Playfair Display', serif;
+  --font-tagline: 'Raleway', sans-serif;
+
+  --color-twelvefit-red: #d03030;
+  --color-twelvefit-dark: #1a1a1a;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-[#0f1115] text-white;
+    font-family: var(--font-sans);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-twelvefit-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-twelvefit-red);
+  border-radius: 4px;
+}
